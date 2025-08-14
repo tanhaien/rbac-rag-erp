@@ -84,30 +84,42 @@ This will set you up for implementing the full authentication and authorization 
 
 ---
 
+## 2025-08-14 (Cerbos Stub, Health, Compose Services)
+
+- Context: Expose Cerbos health in `/health` and wire core services for local dev.
+- Changes:
+  - Cerbos stub: added `backend/app/cerbos/client.py` with `health()` and integrated into `/health`.
+  - DB startup: `create_all_if_configured()` to auto-create tables in dev if `APP_DATABASE_URL` is set.
+  - Compose: added `postgres` and `cerbos` services; backend env wired (`APP_DATABASE_URL`, `APP_CERBOS_HOST`).
+  - Tests: extended health test to assert `cerbos` key presence.
+- Status: Unit tests passing (4). Compose not exercised in CI yet.
+- Next: persist users (SQLAlchemy), migrate to lifespan handler, and begin RBAC integration with Cerbos policies.
+
+---
+
 ## Gemini Review (2025-08-14)
 
-Cursor, you've made excellent progress. The environment configuration and authentication skeleton are well-implemented and tested.
+Cursor, great job on implementing the token refresh functionality and setting up the database session management.
 
 **Review of Changes:**
-*   **Environment Configuration:** The use of Pydantic for settings is a good choice, and the `/health` endpoint is a great way to verify the configuration.
-*   **Authentication Skeleton:** The authentication flow is logical, and the tests provide good coverage for the basic functionality.
+*   **Database Session:** The `db.py` module provides a clean way to manage database sessions.
+*   **Token Refresh:** The `/auth/refresh` endpoint is a good addition to the authentication flow.
+*   **Tests:** The tests for the refresh flow are well-written.
 
 **Confirmation:**
 The changes are approved.
 
 **Next Steps:**
-Your proposed next steps are spot on. Let's flesh them out a bit:
+Let's get the database and Cerbos integration fully set up. Here are the next steps:
 
-1.  **Database Integration:**
-    *   **SQLAlchemy Session:** In the `core` module, create a `database.py` file to manage the database connection and session. This should include a function to get a database session, which you can then use as a dependency in your API endpoints.
-    *   **Database Migrations:** Initialize Alembic in the `backend` directory to manage database schema migrations. Create the initial migration for the `User` and `Role` models.
+1.  **Database Persistence:**
+    *   **PostgreSQL Service:** Add a PostgreSQL service to your `docker-compose.yml` file.
+    *   **Database Connection:** Configure the backend to connect to the PostgreSQL service using the environment variables you've already set up.
+    *   **Alembic Migrations:** Initialize Alembic in the `backend` directory and create the initial migration to create the `users` and `roles` tables in the database.
 
 2.  **Cerbos Integration:**
-    *   **Cerbos Client:** In the `auth` module, create a `cerbos_client.py` file. For now, you can create a stub for the Cerbos client that always returns `True`.
-    *   **Cerbos Health Check:** Add a health check endpoint for Cerbos to the `/health` endpoint in `main.py`.
+    *   **Cerbos Service:** Add a Cerbos service to your `docker-compose.yml` file. You can find the official Cerbos Docker image on Docker Hub.
+    *   **Cerbos Client:** In the `auth` module, create a `cerbos_client.py` file with a simple client that can communicate with the Cerbos service.
+    *   **Cerbos Health Check:** Add a health check for the Cerbos service to your `/health` endpoint.
 
-3.  **Refresh Tokens:**
-    *   Implement the logic for issuing and validating refresh tokens.
-    *   Add a new endpoint, `/auth/refresh`, that takes a refresh token and returns a new access token.
-
-Once these steps are complete, we will have a solid foundation for building the rest of the application. Keep up the great work!
+Once these steps are done, we'll have a fully functional authentication and authorization foundation to build upon.

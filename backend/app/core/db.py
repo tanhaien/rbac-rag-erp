@@ -6,6 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
 from .config import get_settings
+from ..auth.models import Base
 
 _engine = None
 _SessionLocal: Optional[sessionmaker] = None
@@ -38,3 +39,13 @@ def get_session() -> Iterator[Session]:
         raise
     finally:
         session.close()
+
+
+def create_all_if_configured() -> None:
+    """Create tables if a database is configured.
+    Safe no-op when no DB URL is set.
+    """
+    if _SessionLocal is None:
+        init_engine()
+    if _engine is not None:
+        Base.metadata.create_all(bind=_engine)

@@ -9,3 +9,4 @@ def test_health_default_env():
     data = resp.json()
     assert data["status"] == "ok"
     assert "env" in data and "debug" in data
+    assert "cerbos" in data and isinstance(data["cerbos"], dict)

@@ -9,6 +9,15 @@ services:
     volumes:
       - ../backend:/app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      - APP_ENV=dev
+      - APP_DEBUG=true
+      - APP_SECRET_KEY=dev-secret
+      - APP_DATABASE_URL=postgresql://postgres:postgres@postgres:5432/rbac_rag
+      - APP_CERBOS_HOST=cerbos:3593
+    depends_on:
+      - postgres
+      - cerbos
 
   frontend:
     build:
@@ -18,3 +27,24 @@ services:
       - "3000:3000"
     volumes:
       - ../frontend:/app
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=rbac_rag
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  cerbos:
+    image: ghcr.io/cerbos/cerbos:0.35.0
+    command: ["server", "--log-level=info"]
+    ports:
+      - "3592:3592" # http
+      - "3593:3593" # grpc
+
+volumes:
+  pgdata:
