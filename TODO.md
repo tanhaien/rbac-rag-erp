@@ -4,7 +4,7 @@ Feature-by-feature task tracker for RBAC-RAG (Gemini-led).
 
 ## Backlog
 - [x] CI and basic backend test harness
-- [ ] Backend: configuration/settings module (env-driven)
+- [x] Backend: configuration/settings module (env-driven)
 - [ ] Backend: auth skeleton (JWT, users model, login/refresh endpoints)
 - [ ] Backend: Cerbos client integration (stub with health check)
 - [ ] Backend: document ingestion API stub and validation

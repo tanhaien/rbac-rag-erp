@@ -9,3 +9,5 @@ cerbos
 # Dev / test
 pytest
 httpx
+pydantic-settings
+python-dotenv
