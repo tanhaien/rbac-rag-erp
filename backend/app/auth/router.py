@@ -9,6 +9,7 @@ from .service import auth_service
 from ..core.config import get_settings
 from ..core.db import db_dependency
 from .models import User
+from ..cerbos.client import cerbos_client
 
 security = HTTPBearer()
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -72,3 +73,21 @@ def refresh(credentials: HTTPAuthorizationCredentials = Depends(security)) -> To
 
     new_token = auth_service.create_access_token(subject=sub)
     return Token(access_token=new_token)
+
+
+@router.get("/demo-protected")
+def demo_protected(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    settings = get_settings()
+    token = credentials.credentials
+    try:
+        data = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+    # simulate roles: admin if username endswith '-admin', else user
+    username = data.get("sub", "user")
+    roles = ["admin"] if username.endswith("-admin") else ["user"]
+    allowed = cerbos_client.authorize(roles, resource="demo", action="read")
+    if not allowed:
+        raise HTTPException(status_code=403, detail="Forbidden by policy")
+    return {"ok": True, "roles": roles}

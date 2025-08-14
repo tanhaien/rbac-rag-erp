@@ -27,5 +27,18 @@ class CerbosClientStub:
         # In a real client, attempt a ping to host here.
         return CerbosHealth(ok=True, host=self.settings.cerbos_host)
 
+    def authorize(self, roles: list[str], resource: str, action: str) -> bool:
+        """Very simple authorization logic to simulate Cerbos decisions.
+
+        - admin: allow all
+        - user: allow read on demo resource
+        - guest: deny
+        """
+        if "admin" in roles:
+            return True
+        if "user" in roles and resource == "demo" and action == "read":
+            return True
+        return False
+
 
 cerbos_client = CerbosClientStub()

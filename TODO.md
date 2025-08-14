@@ -12,9 +12,11 @@ Feature-by-feature task tracker for RBAC-RAG (Gemini-led).
 
 ## In Progress
 
-- [ ] Backend: auth skeleton (JWT, users model, login/refresh endpoints)
-  - [x] Minimal JWT and /auth/login, /auth/me endpoints (no DB yet)
-  - [x] Users/roles models wired to DB and refresh endpoint
+- [ ] Backend: RBAC with Cerbos
+  - [ ] Role model and relationship with User
+  - [ ] Basic Cerbos policies for roles
+  - [ ] Permission dependency
+  - [ ] Protected endpoint
 
 ## Done
 
@@ -22,3 +24,4 @@ Feature-by-feature task tracker for RBAC-RAG (Gemini-led).
 - [x] Backend: configuration/settings module (env-driven)
 - [x] Backend: Cerbos client integration (stub with health check)
 - [x] Docker Compose: add Postgres, Redis, Cerbos services; wire env
+- [x] Backend: auth skeleton (JWT, users model, login/refresh endpoints)

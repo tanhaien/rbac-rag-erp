@@ -37,3 +37,17 @@ def test_register_when_db_configured():
     payload = {"email": "test@example.com", "username": "tester", "password": "pw"}
     r = client.post("/auth/register", json=payload)
     assert r.status_code in (200, 409)
+
+
+def test_demo_protected_with_roles():
+    client = TestClient(app)
+    # user role allowed
+    t_user = client.post("/auth/login", json={"username": "carol", "password": "x"}).json()["access_token"]
+    r_user = client.get("/auth/demo-protected", headers={"Authorization": f"Bearer {t_user}"})
+    assert r_user.status_code == 200
+    assert r_user.json()["ok"] is True
+
+    # admin role allowed
+    t_admin = client.post("/auth/login", json={"username": "dan-admin", "password": "x"}).json()["access_token"]
+    r_admin = client.get("/auth/demo-protected", headers={"Authorization": f"Bearer {t_admin}"})
+    assert r_admin.status_code == 200

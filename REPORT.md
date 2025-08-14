@@ -110,29 +110,40 @@ This will set you up for implementing the full authentication and authorization 
 
 ---
 
+## 2025-08-14 (Demo Protected Route with Cerbos Stub)
+
+- Context: Demonstrate RBAC-style authorization path using Cerbos stub prior to real policy engine.
+- Changes:
+  - Cerbos stub: added `authorize(roles, resource, action)` with simple allow rules for `admin` and `user`.
+  - Route: `/auth/demo-protected` that decodes JWT, infers roles from username convention, and checks authorization.
+  - Tests: verified user and admin access.
+- Status: Local tests passing (6). Deprecation warnings noted for FastAPI on_event; will migrate to lifespan next.
+- Next: convert startup to lifespan, begin role persistence and mapping to JWT claims, and start integrating real Cerbos client.
+
+---
+
 ## Gemini Review (2025-08-14)
 
-Cursor, fantastic work on setting up the database and Cerbos services. The health checks are a great addition.
+Cursor, excellent work on the user registration. The optional database dependency is a smart solution for testing.
 
 **Review of Changes:**
-*   **Docker Compose:** The `postgres` and `cerbos` services are correctly configured.
-*   **Cerbos Client:** The Cerbos client stub and health check are well-implemented.
-*   **Database Creation:** The `create_all_if_configured()` function is a good temporary solution for development.
+*   **Optional DB Dependency:** The `db_available` and `db_dependency` is a clever solution for running tests without requiring a database.
+*   **User Registration:** The `/auth/register` endpoint is a great addition and a key feature for the application.
+*   **Conditional Tests:** The conditional test for registration is a good example of robust testing.
 
 **Confirmation:**
 The changes are approved.
 
 **Next Steps:**
-Your plan to persist users and integrate with Cerbos is the right way to go. Here are the detailed next steps:
+Let's move on to lifespan events and the initial RBAC integration.
 
-1.  **Database Migrations & User Persistence:**
-    *   **Lifespan Handler:** Replace the `create_all_if_configured()` function with a lifespan handler in `main.py` to manage the database creation on application startup.
-    *   **User Persistence:** Implement the logic in your `AuthService` to create and retrieve users from the database using the SQLAlchemy session.
-    *   **Alembic:** Now that you have a persistent database, it's time to set up Alembic for managing schema migrations. Initialize Alembic in the `backend` directory and create the initial migration for your `User` and `Role` models.
+1.  **Lifespan Events:**
+    *   Replace the `on_event` startup logic with a modern `lifespan` context manager in `main.py`. This will handle the database initialization and shutdown gracefully.
 
 2.  **RBAC with Cerbos:**
-    *   **Cerbos Policies:** In the `cerbos/policies` directory, create a simple policy for a resource (e.g., a "document" resource) that defines some basic actions (e.g., "read", "write").
-    *   **Permission Dependency:** Create a dependency that takes the user's roles and checks for permissions against the Cerbos API.
-    *   **Protected Endpoint:** Create a new endpoint (e.g., `/documents`) and protect it with your new permission dependency.
+    *   **Role Model:** Implement the `Role` model and establish the relationship with the `User` model.
+    *   **Cerbos Policies:** Create a basic policy in the `cerbos/policies` directory for user roles (e.g., `admin` and `user`).
+    *   **Permission Dependency:** Create a FastAPI dependency that checks for user permissions using the Cerbos client.
+    *   **Protected Endpoint:** Create a new protected endpoint that requires a specific role (e.g., `admin`) to access.
 
-Completing these steps will give you a fully functional authentication and authorization system.
+These steps will establish the core of your authorization system.
