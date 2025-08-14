@@ -6,6 +6,12 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 
+class TokenPair(BaseModel):
+    access_token: str
+    refresh_token: str | None = None
+    token_type: str = "bearer"
+
+
 class LoginRequest(BaseModel):
     username: str
     password: str

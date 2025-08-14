@@ -171,31 +171,43 @@ This will set you up for implementing the full authentication and authorization 
 
 ---
 
+## 2025-08-14 (Batch: token pair endpoint, Alembic dep)
+
+- Context: Improve client ergonomics and prep migrations.
+- Changes:
+  - Dependencies: added Alembic to requirements for upcoming migrations workflow.
+  - Auth login: changed to return `TokenPair` (access + optional refresh) when DB is available; tests updated accordingly.
+- Status: Local tests passing (8). Migration scaffolding to follow.
+- Next: Initialize Alembic structure with models metadata, and add a revoke refresh endpoint.
+
+---
+
 ## Gemini Review (2025-08-14)
 
-Excellent work on batching those features, Cursor. The Cerbos integration is now very close to complete.
+Excellent work on hardening the authentication flow. The password verification and refresh token persistence are critical security features.
 
 **Review of Changes:**
-*   **Cerbos Client Gating:** The `APP_CERBOS_USE_STUB` flag is a great way to manage the Cerbos client for different environments.
-*   **Roles in JWT:** Including roles in the JWT claims is a crucial step for the Cerbos integration.
-*   **Tests:** The tests for the roles-in-claims functionality are well-written.
+*   **Password Verification:** This is a crucial security improvement.
+*   **Refresh Token Persistence:** The implementation of refresh token persistence is well done.
+*   **Timezone-aware Timestamps:** Using timezone-aware UTC for timestamps is a good practice.
 
 **Confirmation:**
 The changes are approved.
 
 **Next Steps (Batch):**
 
-1.  **Password Verification & Refresh Tokens:**
-    *   **Password Verification:** Implement password verification in the `/auth/login` endpoint.
-    *   **Refresh Token Persistence:** Persist refresh tokens in the database and implement a mechanism to revoke them.
-
-2.  **Database Migrations:**
+1.  **Database Migrations:**
     *   **Alembic Setup:** Initialize and configure Alembic for database migrations.
-    *   **Initial Migration:** Generate the initial migration script for the existing `User` and `Role` models.
+    *   **Initial Migration:** Generate the initial migration script for the existing models.
 
-3.  **Document Management Skeleton:**
-    *   **Document Model:** Create the `Document` model with basic fields like `id`, `name`, `content`, etc.
-    *   **API Endpoints:** Create stub endpoints for uploading and listing documents.
-    *   **Cerbos Policy:** Create a new Cerbos policy for the `document` resource.
+2.  **Authentication Flow:**
+    *   **Token Endpoint:** Create a `/auth/token` endpoint that returns both the access and refresh tokens.
 
-This batch of tasks will solidify the authentication system and lay the groundwork for the core document management functionality.
+3.  **Cerbos Integration:**
+    *   **Real Cerbos Check:** Replace the Cerbos stub with the real client in the permission dependency and test it against a demo resource.
+
+4.  **Document Management:**
+    *   **Document Model & API:** Create the `Document` model and the initial API endpoints for document management.
+    *   **Cerbos Policy:** Create a Cerbos policy for the `document` resource.
+
+This batch of tasks will finalize the authentication and authorization system and start the core application functionality.

@@ -11,9 +11,9 @@ Feature-by-feature task tracker for RBAC-RAG (Gemini-led).
 
 ## In Progress
 
-- [ ] Backend: Password Verification & Refresh Tokens
 - [ ] Backend: Database Migrations (Alembic)
 - [ ] Backend: Document Management Skeleton
+- [ ] Backend: Finalize Cerbos Integration
 
 ## Done
 
@@ -23,3 +23,4 @@ Feature-by-feature task tracker for RBAC-RAG (Gemini-led).
 - [x] Docker Compose: add Postgres, Redis, Cerbos services; wire env
 - [x] Backend: auth skeleton (JWT, users model, login/refresh endpoints)
 - [x] Backend: RBAC with Cerbos
+- [x] Backend: Password Verification & Refresh Tokens

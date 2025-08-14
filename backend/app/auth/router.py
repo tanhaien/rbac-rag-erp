@@ -4,7 +4,7 @@ from jose import JWTError, jwt
 
 from sqlalchemy.orm import Session
 
-from .schemas import LoginRequest, Token, MeResponse, RegisterRequest, RegisterResponse
+from .schemas import LoginRequest, Token, TokenPair, MeResponse, RegisterRequest, RegisterResponse
 from .service import auth_service
 from ..core.config import get_settings
 from ..core.db import db_dependency
@@ -15,8 +15,8 @@ security = HTTPBearer()
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/login", response_model=Token)
-def login(payload: LoginRequest, db: Session | None = Depends(lambda: None)) -> Token:
+@router.post("/login", response_model=TokenPair)
+def login(payload: LoginRequest, db: Session | None = Depends(lambda: None)) -> TokenPair:
     # Placeholder: accept any username/password for now
     if not payload.username or not payload.password:
         raise HTTPException(status_code=400, detail="Missing credentials")
@@ -32,8 +32,8 @@ def login(payload: LoginRequest, db: Session | None = Depends(lambda: None)) -> 
             claims["roles"] = [r.name for r in user.roles]
 
     access_token = auth_service.create_access_token(subject=payload.username, extra=claims or None)
-    # If DB available, also issue/persist a refresh token and return via header for now
-    # (Keeping response body schema stable)
+    refresh_value: str | None = None
+    # If DB available, also issue/persist a refresh token
     if db is not None and user:
         rt_value = auth_service.generate_refresh_token()
         rt = RefreshToken(
@@ -42,9 +42,8 @@ def login(payload: LoginRequest, db: Session | None = Depends(lambda: None)) -> 
             expires_at=datetime.now(timezone.utc) + timedelta(days=14),
         )
         db.add(rt)
-        # Use HTTPException headers is awkward; FastAPI Response object would be cleaner.
-        # For simplicity, we won't expose it here; clients can call a future endpoint to create/rotate.
-    return Token(access_token=access_token)
+        refresh_value = rt_value
+    return TokenPair(access_token=access_token, refresh_token=refresh_value)
 
 
 @router.post("/register", response_model=RegisterResponse)
