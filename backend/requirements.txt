@@ -5,3 +5,7 @@ psycopg2-binary
 redis
 celery
 cerbos
+
+# Dev / test
+pytest
+httpx
