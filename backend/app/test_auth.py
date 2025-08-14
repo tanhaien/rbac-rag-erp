@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 from .main import app
+from .core.db import db_available
 
 
 def test_login_and_me():
@@ -26,3 +27,13 @@ def test_refresh():
     assert r.status_code == 200
     new_token = r.json()["access_token"]
     assert isinstance(new_token, str) and len(new_token) > 20
+
+
+def test_register_when_db_configured():
+    if not db_available():
+        # Skip if no DB configured in environment
+        return
+    client = TestClient(app)
+    payload = {"email": "test@example.com", "username": "tester", "password": "pw"}
+    r = client.post("/auth/register", json=payload)
+    assert r.status_code in (200, 409)

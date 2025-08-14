@@ -2,10 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 
-from .schemas import LoginRequest, Token, MeResponse
+from sqlalchemy.orm import Session
+
+from .schemas import LoginRequest, Token, MeResponse, RegisterRequest, RegisterResponse
 from .service import auth_service
 from ..core.config import get_settings
-from ..core.db import get_session
+from ..core.db import db_dependency
+from .models import User
 
 security = HTTPBearer()
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -19,6 +22,19 @@ def login(payload: LoginRequest) -> Token:
 
     access_token = auth_service.create_access_token(subject=payload.username)
     return Token(access_token=access_token)
+
+
+@router.post("/register", response_model=RegisterResponse)
+def register(payload: RegisterRequest, db: Session = Depends(db_dependency)) -> RegisterResponse:
+    # Ensure unique username/email
+    if db.query(User).filter((User.username == payload.username) | (User.email == payload.email)).first():
+        raise HTTPException(status_code=409, detail="User already exists")
+
+    hashed = auth_service.hash_password(payload.password)
+    user = User(email=payload.email, username=payload.username, password_hash=hashed)
+    db.add(user)
+    db.flush()
+    return RegisterResponse(id=user.id, email=user.email, username=user.username)
 
 
 @router.get("/me", response_model=MeResponse)

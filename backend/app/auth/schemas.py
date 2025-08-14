@@ -15,3 +15,15 @@ class MeResponse(BaseModel):
     id: int
     email: EmailStr
     username: str
+
+
+class RegisterRequest(BaseModel):
+    email: EmailStr
+    username: str
+    password: str
+
+
+class RegisterResponse(BaseModel):
+    id: int
+    email: EmailStr
+    username: str

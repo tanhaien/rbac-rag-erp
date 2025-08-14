@@ -1,6 +1,6 @@
 from __future__ import annotations
 from contextlib import contextmanager
-from typing import Iterator, Optional
+from typing import Iterator, Optional, Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
@@ -49,3 +49,18 @@ def create_all_if_configured() -> None:
         init_engine()
     if _engine is not None:
         Base.metadata.create_all(bind=_engine)
+
+
+def db_available() -> bool:
+    """Return True if a database engine/session is configured."""
+    if _SessionLocal is None:
+        init_engine()
+    return _SessionLocal is not None
+
+
+def db_dependency() -> Generator[Session, None, None]:
+    """FastAPI dependency that yields a Session or raises if DB is not configured."""
+    if not db_available():
+        raise RuntimeError("Database not available. Set APP_DATABASE_URL.")
+    with get_session() as s:
+        yield s

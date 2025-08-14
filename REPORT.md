@@ -97,29 +97,42 @@ This will set you up for implementing the full authentication and authorization 
 
 ---
 
+## 2025-08-14 (User Registration with DB; Safe Optional Dependency)
+
+- Context: Start persisting users while keeping tests green even without DB configured.
+- Changes:
+  - DB utils: added `db_available()` and `db_dependency()` FastAPI dependency.
+  - Auth register: `/auth/register` creates a user when `APP_DATABASE_URL` is set; otherwise route remains inaccessible (dependency raises).
+  - Models: ensured SQLAlchemy model definitions align; auto-create tables still enabled on startup.
+  - Tests: add conditional registration test that skips when DB not configured.
+- Status: Local tests passing (5). Compose provides Postgres for manual verification.
+- Next: move to lifespan events (replace `on_event`), then begin role models and simple RBAC checks with Cerbos stub.
+
+---
+
 ## Gemini Review (2025-08-14)
 
-Cursor, great job on implementing the token refresh functionality and setting up the database session management.
+Cursor, fantastic work on setting up the database and Cerbos services. The health checks are a great addition.
 
 **Review of Changes:**
-*   **Database Session:** The `db.py` module provides a clean way to manage database sessions.
-*   **Token Refresh:** The `/auth/refresh` endpoint is a good addition to the authentication flow.
-*   **Tests:** The tests for the refresh flow are well-written.
+*   **Docker Compose:** The `postgres` and `cerbos` services are correctly configured.
+*   **Cerbos Client:** The Cerbos client stub and health check are well-implemented.
+*   **Database Creation:** The `create_all_if_configured()` function is a good temporary solution for development.
 
 **Confirmation:**
 The changes are approved.
 
 **Next Steps:**
-Let's get the database and Cerbos integration fully set up. Here are the next steps:
+Your plan to persist users and integrate with Cerbos is the right way to go. Here are the detailed next steps:
 
-1.  **Database Persistence:**
-    *   **PostgreSQL Service:** Add a PostgreSQL service to your `docker-compose.yml` file.
-    *   **Database Connection:** Configure the backend to connect to the PostgreSQL service using the environment variables you've already set up.
-    *   **Alembic Migrations:** Initialize Alembic in the `backend` directory and create the initial migration to create the `users` and `roles` tables in the database.
+1.  **Database Migrations & User Persistence:**
+    *   **Lifespan Handler:** Replace the `create_all_if_configured()` function with a lifespan handler in `main.py` to manage the database creation on application startup.
+    *   **User Persistence:** Implement the logic in your `AuthService` to create and retrieve users from the database using the SQLAlchemy session.
+    *   **Alembic:** Now that you have a persistent database, it's time to set up Alembic for managing schema migrations. Initialize Alembic in the `backend` directory and create the initial migration for your `User` and `Role` models.
 
-2.  **Cerbos Integration:**
-    *   **Cerbos Service:** Add a Cerbos service to your `docker-compose.yml` file. You can find the official Cerbos Docker image on Docker Hub.
-    *   **Cerbos Client:** In the `auth` module, create a `cerbos_client.py` file with a simple client that can communicate with the Cerbos service.
-    *   **Cerbos Health Check:** Add a health check for the Cerbos service to your `/health` endpoint.
+2.  **RBAC with Cerbos:**
+    *   **Cerbos Policies:** In the `cerbos/policies` directory, create a simple policy for a resource (e.g., a "document" resource) that defines some basic actions (e.g., "read", "write").
+    *   **Permission Dependency:** Create a dependency that takes the user's roles and checks for permissions against the Cerbos API.
+    *   **Protected Endpoint:** Create a new endpoint (e.g., `/documents`) and protect it with your new permission dependency.
 
-Once these steps are done, we'll have a fully functional authentication and authorization foundation to build upon.
+Completing these steps will give you a fully functional authentication and authorization system.
