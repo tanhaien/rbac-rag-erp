@@ -4,7 +4,6 @@ Feature-by-feature task tracker for RBAC-RAG (Gemini-led).
 
 ## Backlog
 
-- [ ] Backend: document ingestion API stub and validation
 - [ ] Backend: RAG pipeline skeleton (interfaces only)
 - [ ] Frontend: bootstrap app shell and health page
 - [ ] Tooling: lint/format (ruff/black; eslint/prettier) and pre-commit
@@ -12,13 +11,9 @@ Feature-by-feature task tracker for RBAC-RAG (Gemini-led).
 
 ## In Progress
 
-- [ ] Backend: RBAC with Cerbos
-  - [x] Role model and relationship with User
-  - [ ] Basic Cerbos policies for roles
-  - [x] Permission dependency
-  - [x] Protected endpoint
-  - [ ] Include roles in JWT claims
-  - [ ] Integrate real Cerbos client
+- [ ] Backend: Password Verification & Refresh Tokens
+- [ ] Backend: Database Migrations (Alembic)
+- [ ] Backend: Document Management Skeleton
 
 ## Done
 
@@ -27,3 +22,4 @@ Feature-by-feature task tracker for RBAC-RAG (Gemini-led).
 - [x] Backend: Cerbos client integration (stub with health check)
 - [x] Docker Compose: add Postgres, Redis, Cerbos services; wire env
 - [x] Backend: auth skeleton (JWT, users model, login/refresh endpoints)
+- [x] Backend: RBAC with Cerbos

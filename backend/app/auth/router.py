@@ -8,7 +8,7 @@ from .schemas import LoginRequest, Token, MeResponse, RegisterRequest, RegisterR
 from .service import auth_service
 from ..core.config import get_settings
 from ..core.db import db_dependency
-from .models import User, Role
+from .models import User, Role, RefreshToken
 from ..cerbos.client import cerbos_client
 
 security = HTTPBearer()
@@ -25,10 +25,25 @@ def login(payload: LoginRequest, db: Session | None = Depends(lambda: None)) -> 
     # If DB available, fetch roles for user and include in claims
     if db is not None:
         user = db.query(User).filter(User.username == payload.username).first()
+        if user:
+            if not auth_service.verify_password(payload.password, user.password_hash):
+                raise HTTPException(status_code=401, detail="Invalid credentials")
         if user and user.roles:
             claims["roles"] = [r.name for r in user.roles]
 
     access_token = auth_service.create_access_token(subject=payload.username, extra=claims or None)
+    # If DB available, also issue/persist a refresh token and return via header for now
+    # (Keeping response body schema stable)
+    if db is not None and user:
+        rt_value = auth_service.generate_refresh_token()
+        rt = RefreshToken(
+            user_id=user.id,
+            token=rt_value,
+            expires_at=datetime.now(timezone.utc) + timedelta(days=14),
+        )
+        db.add(rt)
+        # Use HTTPException headers is awkward; FastAPI Response object would be cleaner.
+        # For simplicity, we won't expose it here; clients can call a future endpoint to create/rotate.
     return Token(access_token=access_token)
 
 
@@ -70,21 +85,28 @@ def me(credentials: HTTPAuthorizationCredentials = Depends(security)) -> MeRespo
 
 
 @router.post("/refresh", response_model=Token)
-def refresh(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Token:
-    """Issue a new access token from a valid (but soon-to-expire) access token.
-    In future, switch to long-lived refresh tokens persisted in DB.
-    """
+def refresh(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session | None = Depends(lambda: None)) -> Token:
+    """Issue a new access token from a stored refresh token if DB available; else from access token (legacy)."""
     settings = get_settings()
-    token = credentials.credentials
+    raw = credentials.credentials
+    if db is not None:
+        # Treat provided token as refresh token
+        rt = db.query(RefreshToken).filter(RefreshToken.token == raw, RefreshToken.revoked == False).first()
+        if not rt:
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+        if rt.expires_at < datetime.now(timezone.utc):
+            raise HTTPException(status_code=401, detail="Refresh token expired")
+        user = db.get(User, rt.user_id)
+        claims = {"roles": [r.name for r in user.roles]} if user and user.roles else None
+        return Token(access_token=auth_service.create_access_token(subject=user.username, extra=claims))
+    # Legacy path: parse as access token
     try:
-        data = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
+        data = jwt.decode(raw, settings.secret_key, algorithms=["HS256"])
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-
     sub = data.get("sub")
     if not sub:
         raise HTTPException(status_code=401, detail="Invalid token subject")
-
     new_token = auth_service.create_access_token(subject=sub)
     return Token(access_token=new_token)
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
+import secrets
 
 from jose import jwt
 from passlib.context import CryptContext
@@ -24,7 +25,7 @@ class AuthService:
         return pwd_context.verify(plain, hashed)
 
     def create_access_token(self, subject: str, extra: Optional[dict] = None) -> str:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         payload = {
             "sub": subject,
             "iat": int(now.timestamp()),
@@ -34,6 +35,9 @@ class AuthService:
             payload.update(extra)
         token = jwt.encode(payload, self.settings.secret_key, algorithm=self.algorithm)
         return token
+
+    def generate_refresh_token(self) -> str:
+        return secrets.token_urlsafe(48)
 
 
 auth_service = AuthService()

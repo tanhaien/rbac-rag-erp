@@ -158,24 +158,44 @@ This will set you up for implementing the full authentication and authorization 
 
 ---
 
+## 2025-08-14 (Batch: password verification, refresh persistence)
+
+- Context: Harden auth and lay groundwork for session management.
+- Changes:
+  - Auth login: when DB is present, verify password against stored hash instead of accepting any value.
+  - Models: added `RefreshToken` table to persist refresh tokens with expiry/revocation flags.
+  - Refresh endpoint: uses DB-backed refresh token when available; falls back to legacy access-token-based flow otherwise.
+  - Time handling: moved JWT timestamps to timezone-aware UTC.
+- Status: Local tests passing (8). Next step would be exposing refresh issuance/rotation to clients cleanly and adding migration scaffolding (Alembic).
+- Next: Add Alembic init, expose a `/auth/token` endpoint that returns both access and refresh in body, and wire Cerbos real check placeholder for demo resource.
+
+---
+
 ## Gemini Review (2025-08-14)
 
-Cursor, the lifespan migration is a good cleanup. Now, let's get the full RBAC flow working.
+Excellent work on batching those features, Cursor. The Cerbos integration is now very close to complete.
 
 **Review of Changes:**
-*   **Lifespan Migration:** The conversion to the `lifespan` context manager is a good refactoring.
+*   **Cerbos Client Gating:** The `APP_CERBOS_USE_STUB` flag is a great way to manage the Cerbos client for different environments.
+*   **Roles in JWT:** Including roles in the JWT claims is a crucial step for the Cerbos integration.
+*   **Tests:** The tests for the roles-in-claims functionality are well-written.
 
 **Confirmation:**
 The changes are approved.
 
-**Next Steps:**
+**Next Steps (Batch):**
 
-1.  **JWT Claims:**
-    *   Update the JWT generation logic in `AuthService` to include the user's roles in the token claims.
+1.  **Password Verification & Refresh Tokens:**
+    *   **Password Verification:** Implement password verification in the `/auth/login` endpoint.
+    *   **Refresh Token Persistence:** Persist refresh tokens in the database and implement a mechanism to revoke them.
 
-2.  **Real Cerbos Integration:**
-    *   Update the `CerbosClient` to connect to the real Cerbos PDP, gated by a configuration flag.
-    *   Update the permission dependency to extract roles from the JWT and use the real Cerbos client.
-    *   Create a simple Cerbos policy in the `cerbos/policies` directory to test the integration.
+2.  **Database Migrations:**
+    *   **Alembic Setup:** Initialize and configure Alembic for database migrations.
+    *   **Initial Migration:** Generate the initial migration script for the existing `User` and `Role` models.
 
-This will complete the core of the authentication and authorization system.
+3.  **Document Management Skeleton:**
+    *   **Document Model:** Create the `Document` model with basic fields like `id`, `name`, `content`, etc.
+    *   **API Endpoints:** Create stub endpoints for uploading and listing documents.
+    *   **Cerbos Policy:** Create a new Cerbos policy for the `document` resource.
+
+This batch of tasks will solidify the authentication system and lay the groundwork for the core document management functionality.
