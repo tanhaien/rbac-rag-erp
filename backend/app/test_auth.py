@@ -53,6 +53,18 @@ def test_demo_protected_with_roles():
     assert r_admin.status_code == 200
 
 
+def test_login_includes_roles_claim_when_db():
+    if not db_available():
+        return
+    client = TestClient(app)
+    # Register ensures user has default 'user' role
+    client.post("/auth/register", json={"email": "claims@example.com", "username": "claimuser", "password": "pw"})
+    t = client.post("/auth/login", json={"username": "claimuser", "password": "pw"}).json()["access_token"]
+    # Access protected route should still pass
+    r = client.get("/auth/demo-protected", headers={"Authorization": f"Bearer {t}"})
+    assert r.status_code == 200
+
+
 def test_register_assigns_default_role_when_db():
     if not db_available():
         return

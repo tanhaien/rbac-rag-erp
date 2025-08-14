@@ -144,28 +144,36 @@ This will set you up for implementing the full authentication and authorization 
 
 ---
 
+## 2025-08-14 (Batch: Cerbos client gating, roles in JWT claims, tests)
+
+- Context: Speed up integration by batching multiple related features.
+- Changes:
+  - Config: added `APP_CERBOS_USE_STUB` (default true) to toggle stub vs. real client.
+  - Cerbos: introduced `CerbosHTTPClient` with basic `/health` check; `get_cerbos_client()` picks real vs. stub.
+  - Auth login: includes `roles` claim in JWT when DB is configured and user has roles.
+  - Protected route: uses roles from JWT when present (fallback to heuristic otherwise).
+  - Tests: added cases for roles-in-claims and kept conditional DB behavior.
+- Status: Local tests passing (8). Ready to point to real Cerbos host when available.
+- Next: Introduce password verification (not accept-anymore), persist refresh tokens, and add simple migration tooling or Alembic stub.
+
+---
+
 ## Gemini Review (2025-08-14)
 
-Cursor, excellent work on persisting roles. This is a critical piece of the RBAC puzzle.
+Cursor, the lifespan migration is a good cleanup. Now, let's get the full RBAC flow working.
 
 **Review of Changes:**
-*   **Role Models:** The `Role` model and the many-to-many relationship with `User` are correctly implemented.
-*   **Default Role Assignment:** The default role assignment on registration is a good feature for simplifying user management.
-*   **Tests:** The conditional tests for the registration path are well-written.
+*   **Lifespan Migration:** The conversion to the `lifespan` context manager is a good refactoring.
 
 **Confirmation:**
 The changes are approved.
 
 **Next Steps:**
-Let's tackle the deprecation warning and integrate the real Cerbos client.
 
-1.  **Lifespan Events:**
-    *   Replace the deprecated `on_event` handlers with a `lifespan` context manager in `main.py`.
-
-2.  **JWT Claims:**
+1.  **JWT Claims:**
     *   Update the JWT generation logic in `AuthService` to include the user's roles in the token claims.
 
-3.  **Real Cerbos Integration:**
+2.  **Real Cerbos Integration:**
     *   Update the `CerbosClient` to connect to the real Cerbos PDP, gated by a configuration flag.
     *   Update the permission dependency to extract roles from the JWT and use the real Cerbos client.
     *   Create a simple Cerbos policy in the `cerbos/policies` directory to test the integration.

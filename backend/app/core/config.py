@@ -18,6 +18,7 @@ class Settings(BaseSettings):
 
     # Cerbos
     cerbos_host: str | None = None
+    cerbos_use_stub: bool = True
 
 
 @lru_cache

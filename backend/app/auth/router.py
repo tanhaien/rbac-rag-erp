@@ -16,12 +16,19 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/login", response_model=Token)
-def login(payload: LoginRequest) -> Token:
+def login(payload: LoginRequest, db: Session | None = Depends(lambda: None)) -> Token:
     # Placeholder: accept any username/password for now
     if not payload.username or not payload.password:
         raise HTTPException(status_code=400, detail="Missing credentials")
 
-    access_token = auth_service.create_access_token(subject=payload.username)
+    claims = {}
+    # If DB available, fetch roles for user and include in claims
+    if db is not None:
+        user = db.query(User).filter(User.username == payload.username).first()
+        if user and user.roles:
+            claims["roles"] = [r.name for r in user.roles]
+
+    access_token = auth_service.create_access_token(subject=payload.username, extra=claims or None)
     return Token(access_token=access_token)
 
 
@@ -91,9 +98,9 @@ def demo_protected(credentials: HTTPAuthorizationCredentials = Depends(security)
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
-    # simulate roles: admin if username endswith '-admin', else user
+    # roles from claims if present, else heuristic
     username = data.get("sub", "user")
-    roles = ["admin"] if username.endswith("-admin") else ["user"]
+    roles = data.get("roles") or (["admin"] if username.endswith("-admin") else ["user"])
     allowed = cerbos_client.authorize(roles, resource="demo", action="read")
     if not allowed:
         raise HTTPException(status_code=403, detail="Forbidden by policy")

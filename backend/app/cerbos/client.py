@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from ..core.config import get_settings
+from .real_client import CerbosHTTPClient as _Real
 
 
 @dataclass
@@ -41,4 +42,11 @@ class CerbosClientStub:
         return False
 
 
-cerbos_client = CerbosClientStub()
+def get_cerbos_client():
+    settings = get_settings()
+    if settings.cerbos_use_stub:
+        return CerbosClientStub()
+    return _Real()
+
+
+cerbos_client = get_cerbos_client()
