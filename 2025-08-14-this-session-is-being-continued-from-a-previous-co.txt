@@ -1,0 +1,70 @@
+╭───────────────────────────────────────────────────╮
+│ ✻ Welcome to Claude Code!                         │
+│                                                   │
+│   /help for help, /status for your current setup  │
+│                                                   │
+│   cwd: /home/anhpt95te/Engineer/RBAC-RAG          │
+╰───────────────────────────────────────────────────╯
+
+ Tips for getting started:
+
+ 1. Run /init to create a CLAUDE.md file with instructions for Claude
+ 2. Use Claude to help with file analysis, editing, bash commands and git
+ 3. Be as specific as you would with another engineer for the best results
+ 4. ✔ Run /terminal-setup to set up terminal integration
+● Compact summary (ctrl+r to expand)
+  ⎿  Read ERP-RAG-USE-CASES.md (989 lines)
+  ⎿  Read ERP-AUTHORIZATION-POLICIES.md (1214 lines)
+  ⎿  Todo list read (11 items)
+
+● I'll continue with the current task of creating the ERP-COMPLIANCE-FRAMEWORK.md document. Let me mark task 7 as completed and start working on task 8.
+
+● Update Todos
+  ⎿  ☒ Create ERP-RBAC-RAG-ARCHITECTURE-FINAL.md with Cerbos integration
+     ☒ Create CERBOS-INTEGRATION-GUIDE.md with FastAPI implementation
+     ☒ Create ERP-AUTHORIZATION-POLICIES.md with sample policies
+     ☒ Create ERP-DATABASE-CONNECTORS.md for major ERP systems
+     ☒ Create ERP-DOCUMENT-CLASSIFICATION.md with ERP document types
+     ☒ Create ERP-RAG-USE-CASES.md with practical scenarios
+     ☒ Create ERP-PERFORMANCE-OPTIMIZATION.md for large datasets
+     ☐ Create ERP-COMPLIANCE-FRAMEWORK.md for regulations
+     ☐ Create ERP-SECURITY-PATTERNS.md with security best practices
+     ☐ Update IMPLEMENTATION_GUIDE.md with Cerbos and ERP integration
+     ☐ Create ERP-DEPLOYMENT-GUIDE.md for production deployment
+
+● Now I'll create the ERP-COMPLIANCE-FRAMEWORK.md document focusing on regulatory compliance requirements for ERP RBAC-RAG systems.
+
+● Write(ERP-COMPLIANCE-FRAMEWORK.md)
+  ⎿  Wrote 892 lines to ERP-COMPLIANCE-FRAMEWORK.md                                                                                                                                
+     # ERP Compliance Framework for RBAC-RAG Systems
+     ## Overview
+     This document provides a comprehensive compliance framework for implementing RBAC-RAG systems in ERP environments. It covers major regulatory requirements including SOX, GDPR,
+      HIPAA, CCPA, and industry-specific compliance standards while ensuring data governance and regulatory reporting capabilities.
+     ## Regulatory Compliance Matrix
+     ### 1. Sarbanes-Oxley Act (SOX) Compliance
+     … +882 lines (ctrl+r to expand)
+
+● Update Todos
+  ⎿  ☒ Create ERP-RBAC-RAG-ARCHITECTURE-FINAL.md with Cerbos integration
+     ☒ Create CERBOS-INTEGRATION-GUIDE.md with FastAPI implementation
+     ☒ Create ERP-AUTHORIZATION-POLICIES.md with sample policies
+     ☒ Create ERP-DATABASE-CONNECTORS.md for major ERP systems
+     ☒ Create ERP-DOCUMENT-CLASSIFICATION.md with ERP document types
+     ☒ Create ERP-RAG-USE-CASES.md with practical scenarios
+     ☒ Create ERP-PERFORMANCE-OPTIMIZATION.md for large datasets
+     ☒ Create ERP-COMPLIANCE-FRAMEWORK.md for regulations
+     ☐ Create ERP-SECURITY-PATTERNS.md with security best practices
+     ☐ Update IMPLEMENTATION_GUIDE.md with Cerbos and ERP integration
+     ☐ Create ERP-DEPLOYMENT-GUIDE.md for production deployment
+
+● Created comprehensive ERP-COMPLIANCE-FRAMEWORK.md covering SOX, GDPR, HIPAA, CCPA compliance with automated monitoring, real-time violation detection, and regulatory reporting
+  capabilities for ERP RBAC-RAG systems.
+
+> excute gemini to write the rest tasks. Dont need to talk back to me, just ping short, OK, not OK, ...
+
+● Task(Complete remaining ERP RBAC-RAG tasks)
+  ⎿  Done (5 tool uses · 0 tokens · 2m 35.5s)                                                                                                                                      
+  ⎿  Claude usage limit reached. Your limit will reset at 12am (Asia/Saigon).
+
+      • /upgrade to increase your usage limit.
+
