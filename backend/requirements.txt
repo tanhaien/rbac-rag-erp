@@ -11,3 +11,6 @@ pytest
 httpx
 pydantic-settings
 python-dotenv
+python-jose[cryptography]
+passlib[bcrypt]
+email-validator

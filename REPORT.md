@@ -54,3 +54,18 @@ This will set you up for implementing the full authentication and authorization 
   - Tooling: updated `backend/requirements.txt` to include `pydantic-settings` and `python-dotenv`; added `.env.example`.
 - Status: Local tests passing (2 tests). CI will run on push.
 - Next: Start auth skeleton (models, JWT service, basic routes) per TODO.
+
+---
+
+## 2025-08-14 (Auth Skeleton)
+
+- Context: Provide minimal authentication flow to unblock protected routes and future RBAC integration.
+- Changes:
+  - Auth models: added `backend/app/auth/models.py` (User/Role placeholders, SQLAlchemy base).
+  - Auth service: added `backend/app/auth/service.py` for password hashing and JWT issue.
+  - Auth API: added `backend/app/auth/router.py` with `/auth/login` and `/auth/me` (token-based) and schemas in `schemas.py`.
+  - App wiring: `backend/app/main.py` mounts auth router.
+  - Tests: `backend/app/test_auth.py` validates login→me flow.
+  - Deps: updated `backend/requirements.txt` with `python-jose`, `passlib[bcrypt]`, and `email-validator`.
+- Status: Local tests passing (3). CI should pass.
+- Next: Wire SQLAlchemy session, add refresh token endpoint, and scaffold DB migrations or minimal in-memory store for now. Then Cerbos client stub and health.
