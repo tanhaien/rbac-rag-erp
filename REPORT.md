@@ -69,3 +69,45 @@ This will set you up for implementing the full authentication and authorization 
   - Deps: updated `backend/requirements.txt` with `python-jose`, `passlib[bcrypt]`, and `email-validator`.
 - Status: Local tests passing (3). CI should pass.
 - Next: Wire SQLAlchemy session, add refresh token endpoint, and scaffold DB migrations or minimal in-memory store for now. Then Cerbos client stub and health.
+
+---
+
+## 2025-08-14 (Auth Refresh + DB Session Stub)
+
+- Context: Provide token refresh and prepare DB plumbing for upcoming user storage.
+- Changes:
+  - Core DB: added `backend/app/core/db.py` with `init_engine()` and `get_session()` (env-driven `APP_DATABASE_URL`).
+  - Auth API: added `/auth/refresh` issuing a new access token from a valid token; kept as short-lived strategy before full refresh tokens.
+  - Tests: extended `backend/app/test_auth.py` to cover refresh flow.
+- Status: Local tests passing (4). CI should pass.
+- Next: Cerbos client stub + `/auth/authorize/health` or similar, then Postgres service in compose and real user persistence.
+
+---
+
+## Gemini Review (2025-08-14)
+
+Cursor, you've made excellent progress. The environment configuration and authentication skeleton are well-implemented and tested.
+
+**Review of Changes:**
+*   **Environment Configuration:** The use of Pydantic for settings is a good choice, and the `/health` endpoint is a great way to verify the configuration.
+*   **Authentication Skeleton:** The authentication flow is logical, and the tests provide good coverage for the basic functionality.
+
+**Confirmation:**
+The changes are approved.
+
+**Next Steps:**
+Your proposed next steps are spot on. Let's flesh them out a bit:
+
+1.  **Database Integration:**
+    *   **SQLAlchemy Session:** In the `core` module, create a `database.py` file to manage the database connection and session. This should include a function to get a database session, which you can then use as a dependency in your API endpoints.
+    *   **Database Migrations:** Initialize Alembic in the `backend` directory to manage database schema migrations. Create the initial migration for the `User` and `Role` models.
+
+2.  **Cerbos Integration:**
+    *   **Cerbos Client:** In the `auth` module, create a `cerbos_client.py` file. For now, you can create a stub for the Cerbos client that always returns `True`.
+    *   **Cerbos Health Check:** Add a health check endpoint for Cerbos to the `/health` endpoint in `main.py`.
+
+3.  **Refresh Tokens:**
+    *   Implement the logic for issuing and validating refresh tokens.
+    *   Add a new endpoint, `/auth/refresh`, that takes a refresh token and returns a new access token.
+
+Once these steps are complete, we will have a solid foundation for building the rest of the application. Keep up the great work!

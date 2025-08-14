@@ -5,6 +5,7 @@ from jose import JWTError, jwt
 from .schemas import LoginRequest, Token, MeResponse
 from .service import auth_service
 from ..core.config import get_settings
+from ..core.db import get_session
 
 security = HTTPBearer()
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -35,3 +36,23 @@ def me(credentials: HTTPAuthorizationCredentials = Depends(security)) -> MeRespo
 
     # Placeholder user profile; in future, fetch from DB
     return MeResponse(id=1, email="user@example.com", username=username)
+
+
+@router.post("/refresh", response_model=Token)
+def refresh(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Token:
+    """Issue a new access token from a valid (but soon-to-expire) access token.
+    In future, switch to long-lived refresh tokens persisted in DB.
+    """
+    settings = get_settings()
+    token = credentials.credentials
+    try:
+        data = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+    sub = data.get("sub")
+    if not sub:
+        raise HTTPException(status_code=401, detail="Invalid token subject")
+
+    new_token = auth_service.create_access_token(subject=sub)
+    return Token(access_token=new_token)
