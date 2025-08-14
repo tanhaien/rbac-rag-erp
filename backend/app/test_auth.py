@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
-from .main import app
+
 from .core.db import db_available
+from .main import app
 
 
 def test_login_and_me():
@@ -42,14 +43,22 @@ def test_register_when_db_configured():
 def test_demo_protected_with_roles():
     client = TestClient(app)
     # user role allowed
-    t_user = client.post("/auth/login", json={"username": "carol", "password": "x"}).json()["access_token"]
-    r_user = client.get("/auth/demo-protected", headers={"Authorization": f"Bearer {t_user}"})
+    t_user = client.post(
+        "/auth/login", json={"username": "carol", "password": "x"}
+    ).json()["access_token"]
+    r_user = client.get(
+        "/auth/demo-protected", headers={"Authorization": f"Bearer {t_user}"}
+    )
     assert r_user.status_code == 200
     assert r_user.json()["ok"] is True
 
     # admin role allowed
-    t_admin = client.post("/auth/login", json={"username": "dan-admin", "password": "x"}).json()["access_token"]
-    r_admin = client.get("/auth/demo-protected", headers={"Authorization": f"Bearer {t_admin}"})
+    t_admin = client.post(
+        "/auth/login", json={"username": "dan-admin", "password": "x"}
+    ).json()["access_token"]
+    r_admin = client.get(
+        "/auth/demo-protected", headers={"Authorization": f"Bearer {t_admin}"}
+    )
     assert r_admin.status_code == 200
 
 
@@ -58,8 +67,13 @@ def test_login_includes_roles_claim_when_db():
         return
     client = TestClient(app)
     # Register ensures user has default 'user' role
-    client.post("/auth/register", json={"email": "claims@example.com", "username": "claimuser", "password": "pw"})
-    t = client.post("/auth/login", json={"username": "claimuser", "password": "pw"}).json()["access_token"]
+    client.post(
+        "/auth/register",
+        json={"email": "claims@example.com", "username": "claimuser", "password": "pw"},
+    )
+    t = client.post(
+        "/auth/login", json={"username": "claimuser", "password": "pw"}
+    ).json()["access_token"]
     # Access protected route should still pass
     r = client.get("/auth/demo-protected", headers={"Authorization": f"Bearer {t}"})
     assert r.status_code == 200
@@ -72,3 +86,44 @@ def test_register_assigns_default_role_when_db():
     payload = {"email": "role@example.com", "username": "roleuser", "password": "pw"}
     r = client.post("/auth/register", json=payload)
     assert r.status_code in (200, 409)
+
+
+def test_revoke_refresh_token():
+    client = TestClient(app)
+
+    # Test without DB (should return success message)
+    if not db_available():
+        resp = client.post(
+            "/auth/revoke", headers={"Authorization": "Bearer dummy-token"}
+        )
+        assert resp.status_code == 200
+        assert "no persistence" in resp.json()["message"]
+        return
+
+    # Test with DB - login to get refresh token
+    login_resp = client.post(
+        "/auth/login", json={"username": "revokeuser", "password": "secret"}
+    )
+    assert login_resp.status_code == 200
+    refresh_token = login_resp.json().get("refresh_token")
+
+    if refresh_token:
+        # Revoke the refresh token
+        revoke_resp = client.post(
+            "/auth/revoke", headers={"Authorization": f"Bearer {refresh_token}"}
+        )
+        assert revoke_resp.status_code == 200
+        assert "revoked successfully" in revoke_resp.json()["message"]
+
+        # Try to use revoked token for refresh (should fail)
+        refresh_resp = client.post(
+            "/auth/refresh", headers={"Authorization": f"Bearer {refresh_token}"}
+        )
+        assert refresh_resp.status_code == 401
+    else:
+        # No refresh token issued, test with dummy token
+        revoke_resp = client.post(
+            "/auth/revoke", headers={"Authorization": "Bearer dummy-token"}
+        )
+        assert revoke_resp.status_code == 200
+        assert "revoked successfully" in revoke_resp.json()["message"]

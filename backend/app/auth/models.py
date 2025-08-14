@@ -1,13 +1,10 @@
 from __future__ import annotations
+
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import String, Boolean, DateTime
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Table, Column, ForeignKey
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Table
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import DateTime, String, Boolean
-from datetime import timedelta
 
 
 class Base(DeclarativeBase):
@@ -32,8 +29,11 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    roles: Mapped[list["Role"]] = relationship(
+    roles: Mapped[list[Role]] = relationship(
         back_populates="users", secondary=user_roles, lazy="selectin"
+    )
+    documents: Mapped[list[Document]] = relationship(
+        "Document", back_populates="owner", lazy="selectin"
     )
 
 

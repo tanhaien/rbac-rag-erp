@@ -1,13 +1,13 @@
 from __future__ import annotations
+
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-import secrets
 
 from jose import jwt
 from passlib.context import CryptContext
 
 from ..core.config import get_settings
-
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -29,7 +29,9 @@ class AuthService:
         payload = {
             "sub": subject,
             "iat": int(now.timestamp()),
-            "exp": int((now + timedelta(minutes=self.access_token_minutes)).timestamp()),
+            "exp": int(
+                (now + timedelta(minutes=self.access_token_minutes)).timestamp()
+            ),
         }
         if extra:
             payload.update(extra)

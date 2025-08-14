@@ -1,11 +1,11 @@
 from __future__ import annotations
+
 import os
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-from alembic import context
+from sqlalchemy import engine_from_config, pool
 
+from alembic import context
 from app.auth.models import Base  # import your models metadata
 
 # this is the Alembic Config object, which provides
@@ -29,8 +29,9 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+
 def run_migrations_offline() -> None:
-    url = os.getenv("DATABASE_URL")
+    url = os.getenv("DATABASE_URL", "sqlite:///./test.db")
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -45,7 +46,7 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     configuration = config.get_section(config.config_ini_section)
-    configuration["sqlalchemy.url"] = os.getenv("DATABASE_URL", "")
+    configuration["sqlalchemy.url"] = os.getenv("DATABASE_URL", "sqlite:///./test.db")
 
     connectable = engine_from_config(
         configuration,

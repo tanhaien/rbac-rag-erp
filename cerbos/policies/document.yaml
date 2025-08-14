@@ -1,0 +1,24 @@
+apiVersion: api.cerbos.dev/v1
+policy:
+  id: document-access
+  version: 1.0.0
+  description: "Document access control policy"
+  
+  resourceRules:
+    document:
+      actions:
+        create:
+          effect: allow
+          roles: [user, admin]
+        view:
+          effect: allow
+          roles: [user, admin]
+        list:
+          effect: allow
+          roles: [user, admin]
+        update:
+          effect: allow
+          roles: [user, admin]
+        delete:
+          effect: allow
+          roles: [admin, user]

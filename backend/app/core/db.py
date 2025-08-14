@@ -1,12 +1,14 @@
 from __future__ import annotations
+
+from collections.abc import Generator, Iterator
 from contextlib import contextmanager
-from typing import Iterator, Optional, Generator
+from typing import Optional
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session, sessionmaker
 
-from .config import get_settings
 from ..auth.models import Base
+from .config import get_settings
 
 _engine = None
 _SessionLocal: Optional[sessionmaker] = None
@@ -29,7 +31,9 @@ def get_session() -> Iterator[Session]:
         init_engine()
     if _SessionLocal is None:
         # Database not configured; raise informative error when actually used
-        raise RuntimeError("Database URL not configured. Set APP_DATABASE_URL to enable DB access.")
+        raise RuntimeError(
+            "Database URL not configured. Set APP_DATABASE_URL to enable DB access."
+        )
     session = _SessionLocal()
     try:
         yield session

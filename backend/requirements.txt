@@ -15,3 +15,15 @@ python-jose[cryptography]
 passlib[bcrypt]
 email-validator
 alembic
+
+# Code quality
+ruff==0.3.0
+black==24.1.1
+
+# RAG / ML dependencies
+sentence-transformers
+numpy
+scikit-learn
+faiss-cpu
+transformers
+torch
