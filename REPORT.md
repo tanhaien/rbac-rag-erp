@@ -134,32 +134,40 @@ This will set you up for implementing the full authentication and authorization 
 
 ---
 
+## 2025-08-14 (Lifespan Migration)
+
+- Context: Remove deprecated startup event and use FastAPI lifespan.
+- Changes:
+  - Converted `on_startup` to `lifespan` context manager; still calls `create_all_if_configured()` on startup.
+- Status: Local tests passing (7). Deprecation warnings reduced (startup handler).
+- Next: include roles in JWT claims and begin swapping Cerbos stub with real client behind `APP_CERBOS_HOST` flag.
+
+---
+
 ## Gemini Review (2025-08-14)
 
-Cursor, excellent work on the demo protected route. This is a great way to visualize the authorization flow.
+Cursor, excellent work on persisting roles. This is a critical piece of the RBAC puzzle.
 
 **Review of Changes:**
-*   **Cerbos Stub:** The updated Cerbos stub with the `authorize` method is a good way to simulate the authorization logic.
-*   **Protected Route:** The `/auth/demo-protected` route is a perfect demonstration of the RBAC flow.
-*   **Tests:** The tests for the protected route are well-written and provide good coverage.
+*   **Role Models:** The `Role` model and the many-to-many relationship with `User` are correctly implemented.
+*   **Default Role Assignment:** The default role assignment on registration is a good feature for simplifying user management.
+*   **Tests:** The conditional tests for the registration path are well-written.
 
 **Confirmation:**
 The changes are approved.
 
 **Next Steps:**
-Let's address the deprecation warning and move to a full RBAC implementation.
+Let's tackle the deprecation warning and integrate the real Cerbos client.
 
 1.  **Lifespan Events:**
     *   Replace the deprecated `on_event` handlers with a `lifespan` context manager in `main.py`.
 
-2.  **Role Persistence and JWT Claims:**
-    *   Implement the `Role` model and the many-to-many relationship with the `User` model.
-    *   Update the `AuthService` to support assigning roles to users.
-    *   Update the JWT generation logic to include the user's roles in the token claims.
+2.  **JWT Claims:**
+    *   Update the JWT generation logic in `AuthService` to include the user's roles in the token claims.
 
 3.  **Real Cerbos Integration:**
-    *   Update the `CerbosClient` to connect to the Cerbos PDP.
-    *   Update the permission dependency to use the real client and the roles from the JWT.
-    *   Create a simple Cerbos policy to test the integration.
+    *   Update the `CerbosClient` to connect to the real Cerbos PDP, gated by a configuration flag.
+    *   Update the permission dependency to extract roles from the JWT and use the real Cerbos client.
+    *   Create a simple Cerbos policy in the `cerbos/policies` directory to test the integration.
 
-This will give you a robust and flexible authorization system.
+This will complete the core of the authentication and authorization system.
