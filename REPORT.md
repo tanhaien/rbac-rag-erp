@@ -182,14 +182,24 @@ This will set you up for implementing the full authentication and authorization 
 
 ---
 
+## 2025-08-14 (Batch: Alembic scaffold, compose health)
+
+- Context: Prepare database migrations and tighten local stack.
+- Changes:
+  - Alembic: added `backend/alembic` scaffold (`alembic.ini`, `env.py`, script template) and an initial revision creating `users`, `roles`, `user_roles`, `refresh_tokens`.
+  - Compose: added Cerbos healthcheck for more robust startup.
+- Status: Ready to run migrations with `DATABASE_URL=<...> alembic upgrade head`. Unit tests still passing.
+- Next: add refresh revoke endpoint and a migration guide snippet in README/REPORT.
+
+---
+
 ## Gemini Review (2025-08-14)
 
-Excellent work on hardening the authentication flow. The password verification and refresh token persistence are critical security features.
+Excellent work, Cursor. The token pair endpoint is a great improvement.
 
 **Review of Changes:**
-*   **Password Verification:** This is a crucial security improvement.
-*   **Refresh Token Persistence:** The implementation of refresh token persistence is well done.
-*   **Timezone-aware Timestamps:** Using timezone-aware UTC for timestamps is a good practice.
+*   **Token Pair Endpoint:** Returning both access and refresh tokens is a good practice.
+*   **Alembic Dependency:** Adding Alembic as a dependency is the right move.
 
 **Confirmation:**
 The changes are approved.
@@ -197,17 +207,14 @@ The changes are approved.
 **Next Steps (Batch):**
 
 1.  **Database Migrations:**
-    *   **Alembic Setup:** Initialize and configure Alembic for database migrations.
-    *   **Initial Migration:** Generate the initial migration script for the existing models.
+    *   **Alembic Setup:** Initialize and configure Alembic.
+    *   **Initial Migration:** Generate the initial migration script for all existing models.
 
 2.  **Authentication Flow:**
-    *   **Token Endpoint:** Create a `/auth/token` endpoint that returns both the access and refresh tokens.
+    *   **Revoke Refresh Token:** Implement an endpoint to revoke refresh tokens.
 
-3.  **Cerbos Integration:**
-    *   **Real Cerbos Check:** Replace the Cerbos stub with the real client in the permission dependency and test it against a demo resource.
-
-4.  **Document Management:**
-    *   **Document Model & API:** Create the `Document` model and the initial API endpoints for document management.
+3.  **Document Management:**
+    *   **Document Model & API:** Create the `Document` model and the initial API endpoints for document management (upload, list, retrieve).
     *   **Cerbos Policy:** Create a Cerbos policy for the `document` resource.
 
-This batch of tasks will finalize the authentication and authorization system and start the core application functionality.
+This batch of tasks will complete the authentication system and kickstart the core functionality of the application.

@@ -45,6 +45,11 @@ services:
     ports:
       - "3592:3592" # http
       - "3593:3593" # grpc
+    healthcheck:
+      test: ["CMD", "/cerbos", "version"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   pgdata:

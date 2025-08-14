@@ -13,7 +13,7 @@ Feature-by-feature task tracker for RBAC-RAG (Gemini-led).
 
 - [ ] Backend: Database Migrations (Alembic)
 - [ ] Backend: Document Management Skeleton
-- [ ] Backend: Finalize Cerbos Integration
+- [ ] Backend: Revoke Refresh Token Endpoint
 
 ## Done
 
@@ -24,3 +24,4 @@ Feature-by-feature task tracker for RBAC-RAG (Gemini-led).
 - [x] Backend: auth skeleton (JWT, users model, login/refresh endpoints)
 - [x] Backend: RBAC with Cerbos
 - [x] Backend: Password Verification & Refresh Tokens
+- [x] Backend: Finalize Cerbos Integration
