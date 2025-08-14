@@ -8,7 +8,7 @@ from .schemas import LoginRequest, Token, MeResponse, RegisterRequest, RegisterR
 from .service import auth_service
 from ..core.config import get_settings
 from ..core.db import db_dependency
-from .models import User
+from .models import User, Role
 from ..cerbos.client import cerbos_client
 
 security = HTTPBearer()
@@ -33,6 +33,13 @@ def register(payload: RegisterRequest, db: Session = Depends(db_dependency)) -> 
 
     hashed = auth_service.hash_password(payload.password)
     user = User(email=payload.email, username=payload.username, password_hash=hashed)
+    # Assign default 'user' role if exists, else create
+    role = db.query(Role).filter(Role.name == "user").first()
+    if role is None:
+        role = Role(name="user", description="Default user role")
+        db.add(role)
+        db.flush()
+    user.roles.append(role)
     db.add(user)
     db.flush()
     return RegisterResponse(id=user.id, email=user.email, username=user.username)

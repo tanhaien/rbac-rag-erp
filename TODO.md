@@ -15,8 +15,8 @@ Feature-by-feature task tracker for RBAC-RAG (Gemini-led).
 - [ ] Backend: RBAC with Cerbos
   - [ ] Role model and relationship with User
   - [ ] Basic Cerbos policies for roles
-  - [ ] Permission dependency
-  - [ ] Protected endpoint
+  - [x] Permission dependency
+  - [x] Protected endpoint
 
 ## Done
 

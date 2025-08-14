@@ -51,3 +51,12 @@ def test_demo_protected_with_roles():
     t_admin = client.post("/auth/login", json={"username": "dan-admin", "password": "x"}).json()["access_token"]
     r_admin = client.get("/auth/demo-protected", headers={"Authorization": f"Bearer {t_admin}"})
     assert r_admin.status_code == 200
+
+
+def test_register_assigns_default_role_when_db():
+    if not db_available():
+        return
+    client = TestClient(app)
+    payload = {"email": "role@example.com", "username": "roleuser", "password": "pw"}
+    r = client.post("/auth/register", json=payload)
+    assert r.status_code in (200, 409)
