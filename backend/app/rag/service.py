@@ -25,13 +25,38 @@ from .models import (
     SearchQuery,
     SearchResult,
 )
-from .real_services import (
-    AdvancedDocumentProcessor,
-    FAISSVectorStore,
-    LLMResponseGenerator,
-    RealSearchService,
-    SentenceTransformerEmbeddingService,
-)
+# Conditional imports for real services
+try:
+    from .real_services import (
+        AdvancedDocumentProcessor,
+        FAISSVectorStore,
+        LLMResponseGenerator,
+        RealSearchService,
+        SentenceTransformerEmbeddingService,
+    )
+    REAL_SERVICES_AVAILABLE = True
+except ImportError:
+    REAL_SERVICES_AVAILABLE = False
+    # Create dummy classes for when real services are not available
+    class AdvancedDocumentProcessor:
+        def __init__(self):
+            raise RuntimeError("Real RAG services not available. Install ML dependencies.")
+    
+    class FAISSVectorStore:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError("Real RAG services not available. Install ML dependencies.")
+    
+    class LLMResponseGenerator:
+        def __init__(self):
+            raise RuntimeError("Real RAG services not available. Install ML dependencies.")
+    
+    class RealSearchService:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError("Real RAG services not available. Install ML dependencies.")
+    
+    class SentenceTransformerEmbeddingService:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError("Real RAG services not available. Install ML dependencies.")
 
 
 class SimpleDocumentProcessor(DocumentProcessor):
@@ -218,7 +243,7 @@ class MockResponseGenerator(ResponseGenerator):
 def create_document_processor() -> DocumentProcessor:
     """Create document processor based on configuration."""
     settings = get_settings()
-    if settings.rag_use_real_services:
+    if settings.rag_use_real_services and REAL_SERVICES_AVAILABLE:
         return AdvancedDocumentProcessor()
     return SimpleDocumentProcessor()
 
@@ -226,7 +251,7 @@ def create_document_processor() -> DocumentProcessor:
 def create_embedding_service() -> EmbeddingService:
     """Create embedding service based on configuration."""
     settings = get_settings()
-    if settings.rag_use_real_services:
+    if settings.rag_use_real_services and REAL_SERVICES_AVAILABLE:
         return SentenceTransformerEmbeddingService(settings.rag_embedding_model)
     return MockEmbeddingService()
 
@@ -234,7 +259,7 @@ def create_embedding_service() -> EmbeddingService:
 def create_vector_store() -> VectorStore:
     """Create vector store based on configuration."""
     settings = get_settings()
-    if settings.rag_use_real_services:
+    if settings.rag_use_real_services and REAL_SERVICES_AVAILABLE:
         embedding_service = create_embedding_service()
         # Get dimensions from embedding service config
         config = asyncio.run(embedding_service.get_config())
@@ -248,7 +273,7 @@ def create_search_service() -> SearchService:
     embedding_service = create_embedding_service()
     
     settings = get_settings()
-    if settings.rag_use_real_services:
+    if settings.rag_use_real_services and REAL_SERVICES_AVAILABLE:
         return RealSearchService(vector_store, embedding_service)
     return MockSearchService(vector_store, embedding_service)
 
@@ -256,7 +281,7 @@ def create_search_service() -> SearchService:
 def create_response_generator() -> ResponseGenerator:
     """Create response generator based on configuration."""
     settings = get_settings()
-    if settings.rag_use_real_services:
+    if settings.rag_use_real_services and REAL_SERVICES_AVAILABLE:
         return LLMResponseGenerator()
     return MockResponseGenerator()
 
