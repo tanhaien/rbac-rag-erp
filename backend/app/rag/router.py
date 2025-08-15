@@ -8,6 +8,7 @@ from fastapi.responses import StreamingResponse
 from ..documents.router import get_current_user
 from ..documents.service import DocumentService
 from .models import RAGResponse, SearchQuery
+from .exceptions import RAGError
 from .service import (
     RAGPipelineService,
     create_document_processor,
@@ -48,6 +49,11 @@ async def query_rag(
         response = await rag_pipeline.query(search_query)
         return response
 
+    except RAGError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"RAG processing error: {str(e)}",
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

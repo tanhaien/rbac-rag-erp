@@ -106,9 +106,12 @@ const RAGPage: React.FC = () => {
               rows={3}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Enter your question here..."
+              placeholder="Enter your question here... (e.g., 'What is artificial intelligence?', 'Explain machine learning concepts')"
               disabled={isLoading || isStreaming}
             />
+            <div className="form-help">
+              💡 Tip: Be specific with your questions for better results. The system will search through your processed documents.
+            </div>
           </div>
           <div className="query-actions">
             <button
@@ -116,7 +119,7 @@ const RAGPage: React.FC = () => {
               className="btn btn-primary"
               disabled={isLoading || isStreaming || !query.trim()}
             >
-              {isLoading ? 'Searching...' : 'Search'}
+              {isLoading ? '🔍 Searching...' : '🔍 Search'}
             </button>
             <button
               type="button"
@@ -124,7 +127,20 @@ const RAGPage: React.FC = () => {
               className="btn btn-secondary"
               disabled={isLoading || isStreaming || !query.trim()}
             >
-              {isStreaming ? 'Streaming...' : 'Stream Response'}
+              {isStreaming ? '📡 Streaming...' : '📡 Stream Response'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setQuery('');
+                setResponse(null);
+                setStreamingResponse('');
+                setError(null);
+              }}
+              className="btn btn-outline"
+              disabled={isLoading || isStreaming}
+            >
+              🗑️ Clear
             </button>
           </div>
         </form>

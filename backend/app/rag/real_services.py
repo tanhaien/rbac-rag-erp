@@ -4,12 +4,22 @@ Real implementations of RAG pipeline components.
 
 import asyncio
 import json
+import logging
 import os
 from collections.abc import AsyncGenerator
 from typing import Any, Dict, List, Optional
 import numpy as np
 import faiss
 from sentence_transformers import SentenceTransformer
+
+from .exceptions import (
+    ConfigurationError,
+    DocumentProcessingError,
+    EmbeddingError,
+    PersistenceError,
+    SearchError,
+    VectorStoreError,
+)
 
 from .interfaces import (
     DocumentProcessor,
@@ -32,27 +42,53 @@ class SentenceTransformerEmbeddingService(EmbeddingService):
 
     def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
         self.model_name = model_name
-        self.model = SentenceTransformer(model_name)
-        self.dimensions = self.model.get_sentence_embedding_dimension()
-        self.config = EmbeddingConfig(dimensions=self.dimensions)
+        self.logger = logging.getLogger(__name__)
+        
+        try:
+            self.model = SentenceTransformer(model_name)
+            self.dimensions = self.model.get_sentence_embedding_dimension()
+            self.config = EmbeddingConfig(dimensions=self.dimensions)
+            self.logger.info(f"Initialized embedding service with model: {model_name}, dimensions: {self.dimensions}")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize embedding service with model {model_name}: {e}")
+            raise ConfigurationError(f"Failed to initialize embedding service: {e}")
 
     async def generate_embedding(self, text: str) -> List[float]:
         """Generate embedding for a single text."""
-        # Run in thread pool to avoid blocking
-        loop = asyncio.get_event_loop()
-        embedding = await loop.run_in_executor(
-            None, self.model.encode, text
-        )
-        return embedding.tolist()
+        if not text.strip():
+            raise EmbeddingError("Cannot generate embedding for empty text")
+            
+        try:
+            # Run in thread pool to avoid blocking
+            loop = asyncio.get_event_loop()
+            embedding = await loop.run_in_executor(
+                None, self.model.encode, text
+            )
+            return embedding.tolist()
+        except Exception as e:
+            self.logger.error(f"Failed to generate embedding for text: {e}")
+            raise EmbeddingError(f"Failed to generate embedding: {e}")
 
     async def generate_embeddings_batch(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for multiple texts in batch."""
-        # Run in thread pool to avoid blocking
-        loop = asyncio.get_event_loop()
-        embeddings = await loop.run_in_executor(
-            None, self.model.encode, texts
-        )
-        return embeddings.tolist()
+        if not texts:
+            return []
+            
+        # Filter out empty texts
+        valid_texts = [text for text in texts if text.strip()]
+        if not valid_texts:
+            raise EmbeddingError("No valid texts provided for embedding generation")
+            
+        try:
+            # Run in thread pool to avoid blocking
+            loop = asyncio.get_event_loop()
+            embeddings = await loop.run_in_executor(
+                None, self.model.encode, valid_texts
+            )
+            return embeddings.tolist()
+        except Exception as e:
+            self.logger.error(f"Failed to generate batch embeddings: {e}")
+            raise EmbeddingError(f"Failed to generate batch embeddings: {e}")
 
     async def get_config(self) -> EmbeddingConfig:
         """Get embedding service configuration."""
@@ -67,35 +103,54 @@ class FAISSVectorStore(VectorStore):
         self.index_path = index_path
         self.chunks: Dict[str, DocumentChunk] = {}
         self.chunk_ids: List[str] = []
+        self.logger = logging.getLogger(__name__)
         
-        if self.index_path and os.path.exists(self.index_path):
-            print(f"Loading FAISS index from {self.index_path}")
-            self.index = faiss.read_index(self.index_path)
-            # We need to load chunks metadata separately
-            meta_path = self.index_path + ".meta"
-            if os.path.exists(meta_path):
-                with open(meta_path, "r") as f:
-                    meta_data = json.load(f)
-                    self.chunks = {k: DocumentChunk(**v) for k, v in meta_data["chunks"].items()}
-                    self.chunk_ids = meta_data["chunk_ids"]
-        else:
-            print("Creating new FAISS index")
-            self.index = faiss.IndexFlatIP(dimensions)  # Inner product for cosine similarity
-        
-        self._index_built = self.index.ntotal > 0
+        try:
+            if self.index_path and os.path.exists(self.index_path):
+                self.logger.info(f"Loading FAISS index from {self.index_path}")
+                self.index = faiss.read_index(self.index_path)
+                # We need to load chunks metadata separately
+                meta_path = self.index_path + ".meta"
+                if os.path.exists(meta_path):
+                    with open(meta_path, "r") as f:
+                        meta_data = json.load(f)
+                        self.chunks = {k: DocumentChunk(**v) for k, v in meta_data["chunks"].items()}
+                        self.chunk_ids = meta_data["chunk_ids"]
+                else:
+                    self.logger.warning(f"FAISS index found but metadata file {meta_path} not found")
+            else:
+                self.logger.info("Creating new FAISS index")
+                self.index = faiss.IndexFlatIP(dimensions)  # Inner product for cosine similarity
+            
+            self._index_built = self.index.ntotal > 0
+            self.logger.info(f"FAISS vector store initialized with {self.index.ntotal} vectors")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize FAISS vector store: {e}")
+            raise VectorStoreError(f"Failed to initialize FAISS vector store: {e}")
 
     async def store_chunks(self, chunks: List[DocumentChunk]) -> bool:
         """Store document chunks with their embeddings."""
+        if not chunks:
+            self.logger.warning("No chunks provided for storage")
+            return True
+            
         try:
             # Collect embeddings and chunk IDs
             embeddings = []
             chunk_ids = []
             
             for chunk in chunks:
-                if chunk.embedding:
-                    embeddings.append(chunk.embedding)
-                    chunk_ids.append(chunk.id)
-                    self.chunks[chunk.id] = chunk
+                if not chunk.embedding:
+                    self.logger.warning(f"Chunk {chunk.id} has no embedding, skipping")
+                    continue
+                    
+                if len(chunk.embedding) != self.dimensions:
+                    self.logger.error(f"Chunk {chunk.id} embedding dimension {len(chunk.embedding)} != expected {self.dimensions}")
+                    continue
+                    
+                embeddings.append(chunk.embedding)
+                chunk_ids.append(chunk.id)
+                self.chunks[chunk.id] = chunk
             
             if embeddings:
                 # Convert to numpy array and normalize for cosine similarity
@@ -106,12 +161,16 @@ class FAISSVectorStore(VectorStore):
                 self.index.add(embeddings_array)
                 self.chunk_ids.extend(chunk_ids)
                 self._index_built = True
+                
+                self.logger.info(f"Stored {len(chunks)} chunks in FAISS index")
                 await self._save_index()
+            else:
+                self.logger.warning("No valid embeddings found in chunks")
 
             return True
         except Exception as e:
-            print(f"Error storing chunks: {e}")
-            return False
+            self.logger.error(f"Error storing chunks: {e}")
+            raise VectorStoreError(f"Failed to store chunks: {e}")
 
     async def search_similar(
         self,
@@ -121,7 +180,12 @@ class FAISSVectorStore(VectorStore):
     ) -> List[SearchResult]:
         """Search for similar chunks using vector similarity."""
         if not self._index_built or self.index.ntotal == 0:
+            self.logger.warning("FAISS index is empty, returning no results")
             return []
+
+        if not query_embedding or len(query_embedding) != self.dimensions:
+            self.logger.error(f"Invalid query embedding: length {len(query_embedding) if query_embedding else 0} != expected {self.dimensions}")
+            raise SearchError(f"Invalid query embedding dimensions: {len(query_embedding) if query_embedding else 0} != {self.dimensions}")
 
         try:
             # Normalize query embedding
@@ -129,7 +193,8 @@ class FAISSVectorStore(VectorStore):
             faiss.normalize_L2(query_array)
 
             # Search in FAISS
-            scores, indices = self.index.search(query_array, min(limit * 2, self.index.ntotal))
+            search_limit = min(limit * 2, self.index.ntotal)
+            scores, indices = self.index.search(query_array, search_limit)
 
             results = []
             for i, (score, idx) in enumerate(zip(scores[0], indices[0])):
@@ -140,6 +205,7 @@ class FAISSVectorStore(VectorStore):
                 chunk = self.chunks.get(chunk_id)
                 
                 if not chunk:
+                    self.logger.warning(f"Chunk {chunk_id} not found in storage")
                     continue
 
                 # Apply filters
@@ -156,11 +222,12 @@ class FAISSVectorStore(VectorStore):
                 if len(results) >= limit:
                     break
 
+            self.logger.info(f"Search returned {len(results)} results from {self.index.ntotal} total vectors")
             return results
 
         except Exception as e:
-            print(f"Error in similarity search: {e}")
-            return []
+            self.logger.error(f"Error in similarity search: {e}")
+            raise SearchError(f"Failed to perform similarity search: {e}")
 
     async def delete_document_chunks(self, document_id: int) -> bool:
         """Delete all chunks for a specific document."""
@@ -237,28 +304,48 @@ class FAISSVectorStore(VectorStore):
 class AdvancedDocumentProcessor(DocumentProcessor):
     """Advanced document processor with better text chunking."""
 
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+
     async def process_document(
         self, document_id: int, content: str, config: ProcessingConfig
     ) -> List[DocumentChunk]:
         """Process a document and return chunks."""
-        chunks = await self.chunk_text(content, config)
+        if not content or not content.strip():
+            self.logger.warning(f"Document {document_id} has no content")
+            return []
+            
+        if len(content) > 1000000:  # 1MB limit
+            self.logger.warning(f"Document {document_id} is very large ({len(content)} chars), processing may be slow")
+            
+        try:
+            chunks = await self.chunk_text(content, config)
+            
+            if not chunks:
+                self.logger.warning(f"No chunks generated for document {document_id}")
+                return []
 
-        document_chunks = []
-        for i, chunk_content in enumerate(chunks):
-            chunk = DocumentChunk(
-                id=f"doc_{document_id}_chunk_{i}",
-                document_id=document_id,
-                content=chunk_content,
-                chunk_index=i,
-                metadata={
-                    "chunk_size": len(chunk_content),
-                    "word_count": len(chunk_content.split()),
-                    "char_count": len(chunk_content)
-                },
-            )
-            document_chunks.append(chunk)
+            document_chunks = []
+            for i, chunk_content in enumerate(chunks):
+                chunk = DocumentChunk(
+                    id=f"doc_{document_id}_chunk_{i}",
+                    document_id=document_id,
+                    content=chunk_content,
+                    chunk_index=i,
+                    metadata={
+                        "chunk_size": len(chunk_content),
+                        "word_count": len(chunk_content.split()),
+                        "char_count": len(chunk_content)
+                    },
+                )
+                document_chunks.append(chunk)
 
-        return document_chunks
+            self.logger.info(f"Processed document {document_id} into {len(document_chunks)} chunks")
+            return document_chunks
+            
+        except Exception as e:
+            self.logger.error(f"Failed to process document {document_id}: {e}")
+            raise DocumentProcessingError(f"Failed to process document {document_id}: {e}")
 
     async def chunk_text(self, text: str, config: ProcessingConfig) -> List[str]:
         """Split text into chunks using advanced strategies."""

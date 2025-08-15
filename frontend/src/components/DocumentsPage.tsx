@@ -140,7 +140,17 @@ const DocumentsPage: React.FC = () => {
         )}
 
         {documents.length === 0 ? (
-          <p>No documents found. Create your first document above.</p>
+          <div className="empty-state">
+            <div className="empty-icon">📄</div>
+            <h4>No documents yet</h4>
+            <p>Create your first document to get started with the RAG pipeline.</p>
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="btn btn-primary"
+            >
+              Create First Document
+            </button>
+          </div>
         ) : (
           <div className="documents-list">
             {documents.map((doc) => (
@@ -148,13 +158,13 @@ const DocumentsPage: React.FC = () => {
                 <div className="document-header">
                   <h4>{doc.title}</h4>
                   <div className="document-actions">
-                    <button
-                      onClick={() => handleProcessDocument(doc.id)}
-                      className="btn btn-secondary"
-                      title="Process for RAG"
-                    >
-                      🔍 Process
-                    </button>
+                                         <button
+                       onClick={() => handleProcessDocument(doc.id)}
+                       className="btn btn-secondary"
+                       title="Process for RAG"
+                     >
+                       🔍 Process for RAG
+                     </button>
                     <button
                       onClick={() => handleDeleteDocument(doc.id)}
                       className="btn btn-danger"
