@@ -8,8 +8,7 @@ Feature-by-feature task tracker for RBAC-RAG (Gemini-led).
 
 ## In Progress
 
-- [ ] Frontend integration with backend APIs
-- [ ] User authentication flow implementation
+- [ ] RAG query interface implementation
 
 ## Done
 
@@ -34,3 +33,4 @@ Feature-by-feature task tracker for RBAC-RAG (Gemini-led).
 - [x] Docs: Add migration guide to README
 - [x] Docker: Fix frontend container stability
 - [x] Backend: Real RAG implementations with sentence-transformers and FAISS
+- [x] Frontend: Authentication and document management integration
