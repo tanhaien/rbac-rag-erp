@@ -62,12 +62,27 @@ class SentenceTransformerEmbeddingService(EmbeddingService):
 class FAISSVectorStore(VectorStore):
     """Real vector store using FAISS for similarity search."""
 
-    def __init__(self, dimensions: int = 384):
+    def __init__(self, dimensions: int = 384, index_path: Optional[str] = None):
         self.dimensions = dimensions
-        self.index = faiss.IndexFlatIP(dimensions)  # Inner product for cosine similarity
+        self.index_path = index_path
         self.chunks: Dict[str, DocumentChunk] = {}
         self.chunk_ids: List[str] = []
-        self._index_built = False
+        
+        if self.index_path and os.path.exists(self.index_path):
+            print(f"Loading FAISS index from {self.index_path}")
+            self.index = faiss.read_index(self.index_path)
+            # We need to load chunks metadata separately
+            meta_path = self.index_path + ".meta"
+            if os.path.exists(meta_path):
+                with open(meta_path, "r") as f:
+                    meta_data = json.load(f)
+                    self.chunks = {k: DocumentChunk(**v) for k, v in meta_data["chunks"].items()}
+                    self.chunk_ids = meta_data["chunk_ids"]
+        else:
+            print("Creating new FAISS index")
+            self.index = faiss.IndexFlatIP(dimensions)  # Inner product for cosine similarity
+        
+        self._index_built = self.index.ntotal > 0
 
     async def store_chunks(self, chunks: List[DocumentChunk]) -> bool:
         """Store document chunks with their embeddings."""
@@ -81,8 +96,7 @@ class FAISSVectorStore(VectorStore):
                     embeddings.append(chunk.embedding)
                     chunk_ids.append(chunk.id)
                     self.chunks[chunk.id] = chunk
-                    self.chunk_ids.append(chunk.id)
-
+            
             if embeddings:
                 # Convert to numpy array and normalize for cosine similarity
                 embeddings_array = np.array(embeddings, dtype=np.float32)
@@ -90,7 +104,9 @@ class FAISSVectorStore(VectorStore):
                 
                 # Add to FAISS index
                 self.index.add(embeddings_array)
+                self.chunk_ids.extend(chunk_ids)
                 self._index_built = True
+                await self._save_index()
 
             return True
         except Exception as e:
@@ -164,6 +180,7 @@ class FAISSVectorStore(VectorStore):
             # Rebuild index (FAISS doesn't support deletion, so we rebuild)
             if chunks_to_delete:
                 await self._rebuild_index()
+                await self._save_index()
 
             return True
         except Exception as e:
@@ -176,10 +193,25 @@ class FAISSVectorStore(VectorStore):
             return len(self.chunks)
         return len([c for c in self.chunks.values() if c.document_id == document_id])
 
+    async def _save_index(self):
+        """Save the FAISS index and metadata to disk."""
+        if self.index_path:
+            print(f"Saving FAISS index to {self.index_path}")
+            faiss.write_index(self.index, self.index_path)
+            meta_path = self.index_path + ".meta"
+            with open(meta_path, "w") as f:
+                # Need to convert DocumentChunk objects to dicts for JSON serialization
+                chunks_dict = {k: v.dict() for k, v in self.chunks.items()}
+                json.dump({"chunks": chunks_dict, "chunk_ids": self.chunk_ids}, f)
+
     async def _rebuild_index(self):
         """Rebuild FAISS index from stored chunks."""
+        print("Rebuilding FAISS index...")
+        new_index = faiss.IndexFlatIP(self.dimensions)
+        
         if not self.chunks:
-            self.index = faiss.IndexFlatIP(self.dimensions)
+            self.index = new_index
+            self.chunk_ids = []
             self._index_built = False
             return
 
@@ -193,13 +225,13 @@ class FAISSVectorStore(VectorStore):
                 chunk_ids.append(chunk_id)
 
         if embeddings:
-            # Create new index
-            self.index = faiss.IndexFlatIP(self.dimensions)
             embeddings_array = np.array(embeddings, dtype=np.float32)
             faiss.normalize_L2(embeddings_array)
-            self.index.add(embeddings_array)
-            self.chunk_ids = chunk_ids
-            self._index_built = True
+            new_index.add(embeddings_array)
+            
+        self.index = new_index
+        self.chunk_ids = chunk_ids
+        self._index_built = True
 
 
 class AdvancedDocumentProcessor(DocumentProcessor):

@@ -238,7 +238,7 @@ def create_vector_store() -> VectorStore:
         embedding_service = create_embedding_service()
         # Get dimensions from embedding service config
         config = asyncio.run(embedding_service.get_config())
-        return FAISSVectorStore(config.dimensions)
+        return FAISSVectorStore(config.dimensions, settings.rag_faiss_index_path)
     return MockVectorStore()
 
 

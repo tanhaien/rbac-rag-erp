@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     rag_embedding_model: str = "all-MiniLM-L6-v2"
     rag_chunk_size: int = 1000
     rag_chunk_overlap: int = 200
+    rag_faiss_index_path: str | None = None
 
 
 @lru_cache

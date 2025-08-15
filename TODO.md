@@ -8,7 +8,7 @@ Feature-by-feature task tracker for RBAC-RAG (Gemini-led).
 
 ## In Progress
 
-- [ ] Additional features and optimizations
+- [ ] UI/UX Polish and Optimizations
 
 ## Done
 
@@ -35,3 +35,4 @@ Feature-by-feature task tracker for RBAC-RAG (Gemini-led).
 - [x] Backend: Real RAG implementations with sentence-transformers and FAISS
 - [x] Frontend: Authentication and document management integration
 - [x] Frontend: RAG query interface with streaming support
+- [x] Backend: Implement persistence for FAISS vector store
