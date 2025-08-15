@@ -286,3 +286,18 @@ With the tooling and testing foundation in place, we can move on to implementing
 2.  **Frontend API Integration:** Start connecting the frontend to the backend APIs, beginning with the authentication flow (Login page).
 
 Excellent work, Cursor. The project is exceptionally well-structured. Let's proceed.
+
+---
+
+## 2025-08-15 (Real RAG Implementation with ML Services)
+
+- Context: Replace mock RAG services with real implementations using sentence-transformers and FAISS for production-ready document processing and similarity search.
+- Changes:
+  - Real Services: Created `backend/app/rag/real_services.py` with `SentenceTransformerEmbeddingService`, `FAISSVectorStore`, `AdvancedDocumentProcessor`, `LLMResponseGenerator`, and `RealSearchService`.
+  - Configuration: Added RAG configuration options to `backend/app/core/config.py` including `APP_RAG_USE_REAL_SERVICES`, `APP_RAG_EMBEDDING_MODEL`, `APP_RAG_CHUNK_SIZE`, and `APP_RAG_CHUNK_OVERLAP`.
+  - Factory Pattern: Implemented factory functions in `backend/app/rag/service.py` to create services based on configuration, maintaining backward compatibility with mock services.
+  - Dependencies: Added ML dependencies to `backend/requirements.txt` including `sentence-transformers`, `numpy`, `scikit-learn`, `faiss-cpu`, `transformers`, and `torch`.
+  - Integration: Updated RAG router to use factory functions and display real service information in stats endpoint.
+  - Testing: Created comprehensive test suite `backend/app/test_rag_real.py` covering all real RAG components and integration.
+- Status: Real RAG implementation ready with production-grade ML services. Mock services remain default for development. Tests passing.
+- Next: Frontend API integration with authentication flow and document management.

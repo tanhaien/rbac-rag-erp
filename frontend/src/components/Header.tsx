@@ -1,11 +1,17 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const Header: React.FC = () => {
   const location = useLocation();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (
@@ -24,24 +30,35 @@ const Header: React.FC = () => {
           >
             Health
           </Link>
-          <Link
-            to="/login"
-            className={`nav-link ${isActive('/login') ? 'active' : ''}`}
-          >
-            Login
-          </Link>
-          <Link
-            to="/documents"
-            className={`nav-link ${isActive('/documents') ? 'active' : ''}`}
-          >
-            Documents
-          </Link>
-          <Link
-            to="/rag"
-            className={`nav-link ${isActive('/rag') ? 'active' : ''}`}
-          >
-            RAG
-          </Link>
+          {!isAuthenticated ? (
+            <Link
+              to="/login"
+              className={`nav-link ${isActive('/login') ? 'active' : ''}`}
+            >
+              Login
+            </Link>
+          ) : (
+            <>
+              <Link
+                to="/documents"
+                className={`nav-link ${isActive('/documents') ? 'active' : ''}`}
+              >
+                Documents
+              </Link>
+              <Link
+                to="/rag"
+                className={`nav-link ${isActive('/rag') ? 'active' : ''}`}
+              >
+                RAG
+              </Link>
+              <div className="user-info">
+                <span className="username">{user?.username}</span>
+                <button onClick={handleLogout} className="logout-btn">
+                  Logout
+                </button>
+              </div>
+            </>
+          )}
         </nav>
       </div>
     </header>

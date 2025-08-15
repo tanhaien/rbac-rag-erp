@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const LoginPage: React.FC = () => {
+  const { login, isLoading } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
     password: '',
   });
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -18,17 +21,13 @@ const LoginPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
     try {
-      // TODO: Implement actual login logic
-      console.log('Login attempt:', formData);
-      setError('Login functionality not yet implemented');
+      await login(formData);
+      navigate('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -53,7 +52,7 @@ const LoginPage: React.FC = () => {
               value={formData.username}
               onChange={handleInputChange}
               required
-              disabled={loading}
+              disabled={isLoading}
             />
           </div>
 
@@ -69,7 +68,7 @@ const LoginPage: React.FC = () => {
               value={formData.password}
               onChange={handleInputChange}
               required
-              disabled={loading}
+              disabled={isLoading}
             />
           </div>
 
@@ -92,9 +91,9 @@ const LoginPage: React.FC = () => {
             type="submit"
             className="btn btn-primary"
             style={{ width: '100%' }}
-            disabled={loading}
+            disabled={isLoading}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {isLoading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 

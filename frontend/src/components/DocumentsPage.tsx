@@ -1,6 +1,71 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { documentService, Document, CreateDocumentRequest } from '../services/documentService';
 
 const DocumentsPage: React.FC = () => {
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createForm, setCreateForm] = useState<CreateDocumentRequest>({
+    title: '',
+    content: '',
+    description: '',
+    tags: [],
+    is_public: false,
+  });
+
+  useEffect(() => {
+    loadDocuments();
+  }, []);
+
+  const loadDocuments = async () => {
+    try {
+      setLoading(true);
+      const docs = await documentService.getDocuments();
+      setDocuments(docs);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load documents');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateDocument = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await documentService.createDocument(createForm);
+      setShowCreateForm(false);
+      setCreateForm({ title: '', content: '', description: '', tags: [], is_public: false });
+      loadDocuments();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create document');
+    }
+  };
+
+  const handleDeleteDocument = async (id: number) => {
+    if (window.confirm('Are you sure you want to delete this document?')) {
+      try {
+        await documentService.deleteDocument(id);
+        loadDocuments();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to delete document');
+      }
+    }
+  };
+
+  const handleProcessDocument = async (id: number) => {
+    try {
+      await documentService.processDocument(id);
+      alert('Document processed successfully!');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to process document');
+    }
+  };
+
+  if (loading) {
+    return <div className="loading">Loading documents...</div>;
+  }
+
   return (
     <div className="page">
       <h1 className="page-title">Document Management</h1>
@@ -9,59 +74,109 @@ const DocumentsPage: React.FC = () => {
         and intelligent processing.
       </p>
 
-      <div className="card">
-        <h3 className="card-title">📄 Document Features</h3>
-        <ul style={{ lineHeight: '1.8' }}>
-          <li>
-            <strong>Secure Upload:</strong> Upload documents with automatic
-            metadata extraction
-          </li>
-          <li>
-            <strong>Access Control:</strong> Role-based permissions for document
-            access
-          </li>
-          <li>
-            <strong>Search & Filter:</strong> Find documents by title, content,
-            or metadata
-          </li>
-          <li>
-            <strong>Version Control:</strong> Track document versions and
-            changes
-          </li>
-          <li>
-            <strong>RAG Integration:</strong> Automatic processing for
-            AI-powered search
-          </li>
-        </ul>
-      </div>
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
+      )}
 
       <div className="card">
-        <h3 className="card-title">🚧 Coming Soon</h3>
-        <p>
-          Document management functionality is currently under development. The
-          backend API is ready and the frontend interface will be implemented
-          soon.
-        </p>
-        <p>
-          <strong>Available Backend Endpoints:</strong>
-        </p>
-        <ul>
-          <li>
-            <code>GET /documents/</code> - List documents
-          </li>
-          <li>
-            <code>POST /documents/</code> - Create document
-          </li>
-          <li>
-            <code>GET /documents/{'{id}'}</code> - Get document
-          </li>
-          <li>
-            <code>PUT /documents/{'{id}'}</code> - Update document
-          </li>
-          <li>
-            <code>DELETE /documents/{'{id}'}</code> - Delete document
-          </li>
-        </ul>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 className="card-title">📄 Documents ({documents.length})</h3>
+          <button
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            className="btn btn-primary"
+          >
+            {showCreateForm ? 'Cancel' : 'Create Document'}
+          </button>
+        </div>
+
+        {showCreateForm && (
+          <form onSubmit={handleCreateDocument} className="create-form">
+            <div className="form-group">
+              <label htmlFor="title" className="form-label">Title</label>
+              <input
+                type="text"
+                id="title"
+                className="form-input"
+                value={createForm.title}
+                onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="content" className="form-label">Content</label>
+              <textarea
+                id="content"
+                className="form-input"
+                rows={5}
+                value={createForm.content}
+                onChange={(e) => setCreateForm({ ...createForm, content: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="description" className="form-label">Description</label>
+              <input
+                type="text"
+                id="description"
+                className="form-input"
+                value={createForm.description}
+                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">
+                <input
+                  type="checkbox"
+                  checked={createForm.is_public}
+                  onChange={(e) => setCreateForm({ ...createForm, is_public: e.target.checked })}
+                />
+                Public Document
+              </label>
+            </div>
+            <button type="submit" className="btn btn-primary">Create Document</button>
+          </form>
+        )}
+
+        {documents.length === 0 ? (
+          <p>No documents found. Create your first document above.</p>
+        ) : (
+          <div className="documents-list">
+            {documents.map((doc) => (
+              <div key={doc.id} className="document-item">
+                <div className="document-header">
+                  <h4>{doc.title}</h4>
+                  <div className="document-actions">
+                    <button
+                      onClick={() => handleProcessDocument(doc.id)}
+                      className="btn btn-secondary"
+                      title="Process for RAG"
+                    >
+                      🔍 Process
+                    </button>
+                    <button
+                      onClick={() => handleDeleteDocument(doc.id)}
+                      className="btn btn-danger"
+                      title="Delete document"
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
+                </div>
+                <p className="document-description">{doc.description}</p>
+                <div className="document-meta">
+                  <span className="document-date">
+                    Created: {new Date(doc.created_at).toLocaleDateString()}
+                  </span>
+                  <span className="document-visibility">
+                    {doc.is_public ? '🌐 Public' : '🔒 Private'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

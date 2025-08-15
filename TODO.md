@@ -8,7 +8,6 @@ Feature-by-feature task tracker for RBAC-RAG (Gemini-led).
 
 ## In Progress
 
-- [ ] Real RAG implementations (replace mock services)
 - [ ] Frontend integration with backend APIs
 - [ ] User authentication flow implementation
 
@@ -34,3 +33,4 @@ Feature-by-feature task tracker for RBAC-RAG (Gemini-led).
 - [x] E2E smoke test via docker-compose (API + frontend up)
 - [x] Docs: Add migration guide to README
 - [x] Docker: Fix frontend container stability
+- [x] Backend: Real RAG implementations with sentence-transformers and FAISS
