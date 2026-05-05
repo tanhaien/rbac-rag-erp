@@ -1,95 +1,113 @@
 # RBAC-RAG for ERP
 
-This project is a secure and scalable ERP (Enterprise Resource Planning) system that uses a Retrieval Augmented Generation (RAG) model with Role-Based Access Control (RBAC).
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.12+-blue.svg" alt="Python">
+  <img src="https://img.shields.io/badge/React-18.2+-61DAFB.svg" alt="React">
+  <img src="https://img.shields.io/badge/FastAPI-0.109+-009688.svg" alt="FastAPI">
+  <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
+</p>
 
-## Documentation
+A secure and scalable ERP system with Retrieval Augmented Generation (RAG) and Role-Based Access Control (RBAC). Built with FastAPI, React, PostgreSQL, and Cerbos policy engine.
 
-All the documentation for this project is located in the `docs` directory.
+## 🌟 Features
 
-## Development
+- **Authentication & Authorization**
+  - JWT-based authentication with refresh tokens
+  - Role-based access control (RBAC) via Cerbos policy engine
+  - User role management (Admin, Manager, Employee, Guest)
 
-To start the development environment, use the following command:
+- **Document Management**
+  - CRUD operations for documents
+  - Document metadata with access permissions
+  - PostgreSQL for persistent storage
 
-```bash
-docker-compose up
+- **RAG (Retrieval-Augmented Generation)**
+  - Local embeddings using Sentence Transformers
+  - FAISS vector database for similarity search
+  - Role-based document filtering at query time
+
+- **Full-Stack Implementation**
+  - FastAPI backend with async support
+  - React 18 + TypeScript frontend
+  - Docker & Docker Compose deployment
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         CLIENT (Browser)                       │
+│  React + TypeScript + React Router                              │
+└────────────────────────────┬────────────────────────────────────┘
+                             │ HTTP REST API
+┌────────────────────────────▼────────────────────────────────────┐
+│                      FASTAPI BACKEND                             │
+│  ┌──────────┐  ┌─────────────┐  ┌─────────┐  ┌─────────────┐   │
+│  │   Auth   │  │  Documents  │  │   RAG   │  │   Cerbos    │   │
+│  │ JWT/OAuth2│  │   (CRUD)    │  │ Engine  │  │  (RBAC)     │   │
+│  └──────────┘  └─────────────┘  └─────────┘  └─────────────┘   │
+└────────────────────────────┬────────────────────────────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        ▼                   ▼                   ▼
+┌───────────────┐  ┌───────────────┐  ┌───────────────┐
+│  PostgreSQL    │  │   Cerbos      │  │    Redis      │
+│  (Metadata)   │  │  (Policies)   │  │    (Cache)    │
+└───────────────┘  └───────────────┘  └───────────────┘
+        │
+        ▼
+┌───────────────┐  ┌───────────────┐
+│    FAISS      │  │   Sentence    │
+│ (Vector Store)│◄─│  Transformers │
+└───────────────┘  └───────────────┘
 ```
 
-## Database Migrations
-
-This project uses Alembic for database migrations. Here's how to work with migrations:
+## 🚀 Quick Start
 
 ### Prerequisites
 
-Make sure you have the required dependencies installed:
+- Docker & Docker Compose
+- Python 3.12+
+- Node.js 18+
+
+### Running with Docker Compose
+
 ```bash
-cd backend
-pip install -r requirements.txt
+# Clone the repository
+git clone https://github.com/uai-product/usmarter-ai.git
+cd usmarter-ai
+
+# Start all services
+docker-compose -f docker/docker-compose.yml up
 ```
 
-### Running Migrations
+Services will be available at:
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **Cerbos Policy Server**: http://localhost:3592
 
-1. **Apply all migrations:**
-   ```bash
-   cd backend
-   PYTHONPATH=/path/to/backend alembic upgrade head
-   ```
+### Manual Setup
 
-2. **Create a new migration:**
-   ```bash
-   cd backend
-   PYTHONPATH=/path/to/backend alembic revision --autogenerate -m "Description of changes"
-   ```
-
-3. **Check migration status:**
-   ```bash
-   cd backend
-   PYTHONPATH=/path/to/backend alembic current
-   ```
-
-4. **Rollback to previous migration:**
-   ```bash
-   cd backend
-   PYTHONPATH=/path/to/backend alembic downgrade -1
-   ```
-
-### Migration Files
-
-- Migration files are located in `backend/alembic/versions/`
-- Each migration has a unique revision ID and descriptive name
-- The `alembic.ini` file contains database configuration
-- The `alembic/env.py` file imports all models for autogeneration
-
-### Troubleshooting
-
-- **Database connection issues**: Check your `DATABASE_URL` environment variable
-- **Import errors**: Ensure `PYTHONPATH` is set to the backend directory
-- **SQLite limitations**: Some operations like `ALTER COLUMN` are not supported in SQLite
-
-## Code Quality
-
-### Backend (Python)
-
-The backend uses Ruff for linting and Black for code formatting:
+#### Backend
 
 ```bash
 cd backend
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# venv\Scripts\activate  # Windows
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Run linting
-ruff check .
+# Copy environment file
+cp .env.example .env
 
-# Run formatting
-black .
-
-# Run both (using the provided script)
-./scripts/lint.sh
+# Run the server
+uvicorn app.main:app --reload
 ```
 
-### Frontend (React/TypeScript)
-
-The frontend uses ESLint for linting and Prettier for code formatting:
+#### Frontend
 
 ```bash
 cd frontend
@@ -97,46 +115,143 @@ cd frontend
 # Install dependencies
 npm install
 
-# Run linting
-npm run lint
-
-# Fix linting issues
-npm run lint:fix
-
-# Run formatting
-npm run format
-
-# Check formatting
-npm run format:check
+# Start development server
+npm start
 ```
 
-## Testing
+## 📁 Project Structure
 
-### Unit Tests
+```
+RBAC-RAG/
+├── backend/                 # FastAPI backend
+│   ├── app/
+│   │   ├── auth/           # Authentication module
+│   │   ├── documents/     # Document management
+│   │   ├── rag/           # RAG engine
+│   │   ├── cerbos/        # Authorization client
+│   │   └── core/          # Core config & DB
+│   ├── alembic/           # Database migrations
+│   └── requirements.txt
+│
+├── frontend/               # React frontend
+│   ├── src/
+│   │   ├── components/    # React components
+│   │   ├── contexts/      # Auth context
+│   │   ├── hooks/         # Custom hooks
+│   │   └── services/      # API services
+│   └── package.json
+│
+├── cerbos/                 # RBAC policies
+│   └── policies/
+│
+├── docker/                 # Docker configs
+│   ├── Dockerfile.backend
+│   ├── Dockerfile.frontend
+│   └── docker-compose.yml
+│
+├── scripts/                # Utility scripts
+│   ├── setup.sh
+│   ├── deploy.sh
+│   ├── migrate.sh
+│   └── e2e-test.sh
+│
+└── docs/                   # Documentation
+```
+
+## 🔐 API Endpoints
+
+### Authentication
+- `POST /auth/register` - Register new user
+- `POST /auth/login` - Login (get JWT token)
+- `POST /auth/refresh` - Refresh access token
+- `POST /auth/logout` - Logout (revoke token)
+
+### Documents
+- `GET /documents` - List documents (RBAC filtered)
+- `POST /documents` - Create document
+- `GET /documents/{id}` - Get document by ID
+- `PUT /documents/{id}` - Update document
+- `DELETE /documents/{id}` - Delete document
+
+### RAG Query
+- `POST /rag/query` - Query with RAG (role-filtered)
+
+### Health
+- `GET /health` - System health check
+
+## 🔧 Configuration
+
+### Environment Variables (Backend)
+
+```env
+APP_ENV=dev
+APP_DEBUG=true
+APP_SECRET_KEY=your-secret-key
+APP_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/rbac_rag
+APP_CERBOS_HOST=localhost:3593
+```
+
+### RBAC Roles
+
+| Role | Description |
+|------|-------------|
+| `admin` | Full access to all resources |
+| `manager` | Access to department documents |
+| `employee` | Access to shared documents |
+| `guest` | Read-only access to public documents |
+
+## 🧪 Testing
 
 ```bash
 # Backend tests
-cd backend
-python -m pytest
+cd backend && python -m pytest
 
 # Frontend tests
-cd frontend
-npm test
-```
+cd frontend && npm test
 
-### End-to-End Testing
-
-Run the complete system test:
-
-```bash
-# From project root
+# End-to-end tests
 ./scripts/e2e-test.sh
 ```
 
-This script will:
-1. Start all services with docker-compose
-2. Wait for services to be ready
-3. Test backend health endpoints
-4. Test frontend accessibility
-5. Verify API endpoints are working
-6. Provide a summary of the test results
+## 📝 Code Quality
+
+### Backend (Python)
+```bash
+cd backend
+ruff check .          # Lint
+black .              # Format
+./scripts/lint.sh    # Both
+```
+
+### Frontend (React/TypeScript)
+```bash
+cd frontend
+npm run lint         # Lint
+npm run format      # Format
+```
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Backend | FastAPI, Python 3.12+ |
+| Frontend | React 18, TypeScript |
+| Database | PostgreSQL 16 |
+| ORM | SQLAlchemy + Alembic |
+| Auth | JWT (python-jose), bcrypt |
+| Authorization | Cerbos (policy engine) |
+| Vector Store | FAISS CPU |
+| Embeddings | Sentence Transformers |
+| Container | Docker + Docker Compose |
+| Linting | Ruff, Black, ESLint, Prettier |
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## 📚 Documentation
+
+See the `docs/` directory for detailed documentation:
+- [Architecture](docs/ARCHITECTURE.md)
+- [Implementation Guide](docs/IMPLEMENTATION_GUIDE.md)
+- [Cerbos Integration](docs/CERBOS-INTEGRATION-GUIDE.md)
